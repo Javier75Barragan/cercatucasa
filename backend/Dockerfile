@@ -1,20 +1,31 @@
-# Backend Dockerfile para Railway
-FROM node:20-alpine
+# Backend Dockerfile para Railway — Multi-stage build
+# Etapa 1: Build (incluye devDependencies para compilar TypeScript)
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copiar package files
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Instalar dependencias
+# Instalar TODAS las dependencias (incluyendo devDeps para TypeScript)
+RUN npm ci
+
+# Copiar código fuente y compilar
+COPY src ./src
+RUN npm run build
+
+# Etapa 2: Producción (solo lo necesario para ejecutar)
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+COPY package*.json ./
+
+# Solo dependencias de producción
 RUN npm ci --only=production
 
-# Copiar código fuente
-COPY . .
-
-# Compilar TypeScript
-RUN npm run build
+# Copiar el build compilado
+COPY --from=builder /app/dist ./dist
 
 # Exponer puerto
 EXPOSE 3000
