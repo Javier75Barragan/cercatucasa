@@ -28,11 +28,20 @@ initializeWebSocket(httpServer);
 
 // Middleware
 app.use(helmet());
+
+// Configuración de CORS segura y flexible
+const allowedOrigin = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.replace(/\/$/, '') : 'http://localhost:5173';
+
 app.use(cors({
-  origin: '*', // Temporalmente permitido para diagnosticar
+  origin: [
+    allowedOrigin,
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ],
   credentials: true,
 }));
-console.log('🔒 CORS: Modo DIAGNÓSTICO (Abierto a todo)');
+
+console.log('🔒 CORS: Seguridad restaurada para:', allowedOrigin);
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
