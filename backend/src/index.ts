@@ -29,10 +29,10 @@ initializeWebSocket(httpServer);
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: '*', // Temporalmente permitido para diagnosticar
   credentials: true,
 }));
-console.log('🔒 CORS configurado para:', process.env.CORS_ORIGIN || 'http://localhost:5173');
+console.log('🔒 CORS: Modo DIAGNÓSTICO (Abierto a todo)');
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
