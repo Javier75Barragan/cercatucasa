@@ -23,7 +23,7 @@ const Header = () => {
             <Link to="/" className="flex items-center gap-3 group" id="header-logo">
               <div className="relative w-10 h-10 md:w-12 md:h-12 overflow-hidden rounded-xl bg-white/5 p-1 border border-white/10 group-hover:border-primary-500/50 transition-all shadow-[0_0_15px_rgba(255,255,255,0.1)]">
                 <img 
-                  src="file:///C:/Users/Bafer/.gemini/antigravity/brain/63f63873-21fe-469a-9b3c-9d07fbdde7a2/cercaya_logo_premium_v1_radar_1775874218884.png" 
+                  src="/logo.png" 
                   alt="Logo CercaYa" 
                   className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] brightness-125 contract-125"
                 />
