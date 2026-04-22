@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
+import MobileNavbar from './components/MobileNavbar';
 import Home from './pages/Home';
+// ... (rest of imports)
 import Login from './pages/Login';
 import Register from './pages/Register';
 import VendorDashboard from './pages/VendorDashboard';
@@ -26,37 +28,40 @@ const ProtectedRoute = ({ children, requireSeller = false }: { children: React.R
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-surface-950 text-white">
         <Header />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/vendor/dashboard"
-            element={
-              <ProtectedRoute requireSeller>
-                <VendorDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/alerts"
-            element={
-              <ProtectedRoute>
-                <Alerts />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+        <main className="pb-20 md:pb-0">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/vendor/dashboard"
+              element={
+                <ProtectedRoute requireSeller>
+                  <VendorDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alerts"
+              element={
+                <ProtectedRoute>
+                  <Alerts />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </main>
+        <MobileNavbar />
       </div>
     </BrowserRouter>
   );

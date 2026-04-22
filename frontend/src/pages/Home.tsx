@@ -203,36 +203,38 @@ const Home = () => {
             <Map />
             <MapFilters />
 
-            {/* Float Action Button (Mobile Only) */}
-            <div className="md:hidden absolute bottom-6 left-0 right-0 px-6 z-[400] flex justify-center gap-3">
-              <button
-                onClick={() => setShowMobileList(true)}
-                className="flex items-center gap-2.5 px-6 py-3.5 bg-white text-dark-950 rounded-2xl shadow-2xl font-bold text-sm active:scale-95 transition-all"
-              >
-                <List className="w-5 h-5" />
-                Listado
-              </button>
-              
-              <button
-                onClick={() => setShowRadar(!showRadar)}
-                className={`p-3.5 backdrop-blur-md rounded-2xl border shadow-2xl transition-all ${
-                  showRadar ? 'bg-primary-500 text-white border-primary-400' : 'bg-dark-900/80 text-white border-white/10'
-                }`}
-              >
-                <BellRing className={`w-5 h-5 ${showRadar ? 'animate-pulse' : ''}`} />
-              </button>
+            {/* Float Action Button (Mobile Only) - Refined */}
+            <div className="md:hidden absolute bottom-24 left-0 right-0 px-6 z-[400] flex justify-between items-end">
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => setShowRadar(!showRadar)}
+                  className={`p-4 backdrop-blur-md rounded-2xl border shadow-2xl transition-all active:scale-90 ${
+                    showRadar ? 'bg-primary-500 text-white border-primary-400' : 'bg-surface-900/80 text-white border-white/10'
+                  }`}
+                >
+                  <BellRing className={`w-6 h-6 ${showRadar ? 'animate-pulse' : ''}`} />
+                </button>
+                
+                <button
+                  onClick={refreshLocation}
+                  className="p-4 bg-surface-900/80 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl text-white active:scale-90 transition-all"
+                >
+                  <Navigation className={`w-6 h-6 ${isGeoLoading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
 
               <button
-                onClick={refreshLocation}
-                className="p-3.5 bg-dark-900/80 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl text-white active:scale-95 transition-all"
+                onClick={() => setShowMobileList(true)}
+                className="flex items-center gap-3 px-6 py-4 bg-primary-500 text-white rounded-2xl shadow-glow-sm font-bold text-sm active:scale-95 transition-all"
               >
-                <Navigation className={`w-5 h-5 ${isGeoLoading ? 'animate-spin' : ''}`} />
+                <List className="w-5 h-5" />
+                Ver Listado
               </button>
             </div>
 
             {/* Radar Panel Desktop/Overlay */}
             {showRadar && (
-              <div className="absolute top-0 right-0 bottom-0 w-80 z-[450] animate-slide-up md:animate-slide-in-right">
+              <div className="absolute inset-0 md:inset-auto md:top-0 md:right-0 md:bottom-0 md:w-80 z-[450] animate-slide-up md:animate-slide-in-right">
                 <RadarPanel encounters={encounters} onClose={() => setShowRadar(false)} />
               </div>
             )}
@@ -243,43 +245,49 @@ const Home = () => {
         )}
       </div>
 
-      {/* Mobile Bottom Sheet Drawer */}
+      {/* Mobile Bottom Sheet Drawer - Premium Refinement */}
       {showMobileList && (
         <>
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[450] md:hidden animate-fade-in"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[550] md:hidden animate-fade-in"
             onClick={() => setShowMobileList(false)}
           />
-          <div className="fixed bottom-0 left-0 right-0 bg-dark-950/95 backdrop-blur-xl rounded-t-[32px] border-t border-white/10 shadow-2xl z-[460] md:hidden h-[80vh] flex flex-col animate-slide-up">
-            <div className="bottom-sheet-handle" />
+          <div className="fixed bottom-0 left-0 right-0 bg-surface-950 rounded-t-[40px] border-t border-white/10 shadow-2xl z-[560] md:hidden h-[85vh] flex flex-col animate-slide-up">
+            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mt-4 mb-2" />
             
-            <div className="flex items-center justify-between px-6 pt-4 pb-4">
-              <div>
-                <h2 className="text-xl font-bold text-white tracking-tight">Vendedores Cerca</h2>
-                <p className="text-xs text-white/30 tracking-wide mt-1">Busca el ícono 🏛️ para empresas oficiales</p>
+            <div className="px-8 pt-6 pb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-2xl font-black text-white tracking-tighter">Vendedores Cerca</h2>
+                <button
+                  onClick={() => setShowMobileList(false)}
+                  className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white/40 active:scale-90 transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                onClick={() => setShowMobileList(false)}
-                className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white/40 active:scale-90 transition-all"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
+                <p className="text-xs font-bold text-primary-500 uppercase tracking-widest">En vivo ahora</p>
+              </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 pt-2">
+            <div className="flex-1 overflow-y-auto px-6 pb-32 space-y-4 custom-scrollbar">
               {isLoading && vendors.length === 0 ? (
                 <div className="py-20 flex flex-col items-center opacity-40">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary-500 mb-4" />
-                  <p className="text-sm">Explorando cercanías...</p>
+                  <Loader2 className="w-10 h-10 animate-spin text-primary-500 mb-4" />
+                  <p className="text-sm font-medium tracking-wide">Rastreando el sector...</p>
                 </div>
               ) : vendors.length > 0 ? (
-                vendors.map((vendor) => (
-                  <VendorCard key={vendor.id} vendor={vendor} />
-                ))
+                <div className="grid gap-4 animate-fade-in">
+                  {vendors.map((vendor) => (
+                    <VendorCard key={vendor.id} vendor={vendor} />
+                  ))}
+                </div>
               ) : (
-                <div className="py-20 text-center opacity-30">
-                  <div className="text-4xl mb-4">🛸</div>
-                  <p className="text-sm">Área despejada.</p>
+                <div className="py-20 text-center">
+                  <div className="text-6xl mb-6 grayscale opacity-20">📡</div>
+                  <h3 className="text-white/60 font-bold mb-2">Sin señales próximas</h3>
+                  <p className="text-white/30 text-xs px-10">Prueba a moverte un poco o expande el radar en los filtros.</p>
                 </div>
               )}
             </div>

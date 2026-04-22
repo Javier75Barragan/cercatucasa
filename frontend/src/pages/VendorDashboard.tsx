@@ -375,39 +375,39 @@ const VendorDashboard = () => {
       
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-8 py-10 z-10">
         {/* Header Dashboard */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 animate-fade-in">
-          <div>
-            <div className="flex items-center gap-3 mb-3">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 animate-fade-in px-2">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 mb-2">
                <div className="badge-active bg-primary-500/10 border-primary-500/30">
-                  <Signal className="w-3 h-3 text-primary-400 animate-pulse" />
-                  <span className="text-primary-400 font-bold tracking-widest text-[10px] uppercase">Online Status</span>
+                  <Signal className="w-2.5 h-2.5 text-primary-400 animate-pulse" />
+                  <span className="text-primary-400 font-bold tracking-widest text-[9px] uppercase">Radar Pro</span>
                </div>
-               <div className={`text-[10px] font-bold px-2 py-1 rounded-md ${isConnected ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>
-                 {isConnected ? 'NODE CONNECTED' : 'OFFLINE'}
+               <div className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${isConnected ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>
+                 {isConnected ? 'ONLINE' : 'OFFLINE'}
                </div>
             </div>
-            <h1 className="text-4xl font-black tracking-tighter">Control <span className="gradient-text">Pro</span></h1>
-            <p className="text-white/40 mt-1 font-medium italic">"{vendor.name}" &bull; {vendor.category}</p>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tighter">Panel de <span className="gradient-text">Control</span></h1>
+            <p className="text-white/40 text-sm font-medium">{vendor.name}</p>
           </div>
           
-          <div className="flex flex-wrap gap-3">
+          <div className="flex gap-3">
              <button
                 onClick={handleToggleActive}
                 disabled={isLoading || !isConnected}
-                className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl font-black text-sm transition-all duration-300 transform active:scale-95 ${
+                className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-black text-sm transition-all duration-300 transform active:scale-95 shadow-2xl ${
                   isActive 
-                  ? 'bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.1)]' 
+                  ? 'bg-red-500 text-white shadow-red-500/20' 
                   : 'bg-primary-500 text-white shadow-glow-sm hover:shadow-glow-md'
                 }`}
              >
                 <Power className={`w-5 h-5 ${isActive ? 'animate-pulse' : ''}`} />
-                {isActive ? 'SALIR DEL AIRE' : 'EMPEZAR TRANSMISIÓN'}
+                {isActive ? 'DETENER SEÑAL' : 'TRANSMITIR AHORA'}
              </button>
              
              {location && isActive && (
                <button
                  onClick={handleUpdateLocation}
-                 className="p-3.5 glass hover:bg-white/10 rounded-2xl text-white/70 hover:text-white transition-all border border-white/5 active:rotate-180 duration-500"
+                 className="p-4 glass hover:bg-white/10 rounded-2xl text-white transition-all border border-white/10 active:rotate-180 duration-500"
                >
                  <MapPin size={22} />
                </button>
@@ -415,20 +415,20 @@ const VendorDashboard = () => {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12 animate-slide-up">
+        {/* Stats Grid - Optimized for Mobile */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 animate-slide-up px-2">
            {[
-             { label: 'Visitas Hoy', val: stats.views, icon: Eye, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+             { label: 'Visitas', val: stats.views, icon: Eye, color: 'text-blue-400', bg: 'bg-blue-400/10' },
              { label: 'Contactos', val: stats.contacts, icon: MessageCircle, color: 'text-primary-400', bg: 'bg-primary-400/10' },
              { label: 'Rating', val: stats.rating, icon: Star, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
              { label: 'Favoritos', val: stats.favorites, icon: Heart, color: 'text-red-400', bg: 'bg-red-400/10' },
            ].map((s, i) => (
-             <div key={i} className="glass p-6 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-white/10 transition-colors">
-                <div className={`absolute top-0 right-0 w-16 h-16 ${s.bg} rounded-bl-full opacity-30 flex items-center justify-center pt-2 pl-2`}>
-                   <s.icon className={`w-5 h-5 ${s.color}`} />
+             <div key={i} className="glass p-4 md:p-6 rounded-3xl border border-white/5 relative overflow-hidden group">
+                <div className={`absolute top-0 right-0 w-12 h-12 md:w-16 md:h-16 ${s.bg} rounded-bl-full opacity-30 flex items-center justify-center pt-1 pl-1`}>
+                   <s.icon className={`w-4 h-4 md:w-5 md:h-5 ${s.color}`} />
                 </div>
-                <p className="text-3xl font-black text-white">{s.val}</p>
-                <p className="text-[10px] uppercase font-bold text-white/30 tracking-widest mt-1">{s.label}</p>
+                <p className="text-2xl md:text-3xl font-black text-white">{s.val}</p>
+                <p className="text-[9px] md:text-[10px] uppercase font-bold text-white/30 tracking-widest mt-0.5">{s.label}</p>
              </div>
            ))}
         </div>
