@@ -190,6 +190,8 @@ router.get(
   '/categories',
   asyncHandler(async (_req, res) => {
     const categories = [
+      { id: 'fast_food', name: 'Comidas Rápidas', icon: '🍔' },
+      { id: 'restaurant', name: 'Restaurantes', icon: '🍽️' },
       { id: 'fruits_vegetables', name: 'Frutas y Verduras', icon: '🥬' },
       { id: 'dairy', name: 'Lácteos', icon: '🥛' },
       { id: 'bakery', name: 'Panadería', icon: '🥖' },
