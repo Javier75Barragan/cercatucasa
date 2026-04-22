@@ -18,7 +18,7 @@ const MobileNavbar = () => {
   }
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[500] safe-bottom">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[2000] safe-bottom">
       <div className="mx-4 mb-4 glass rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
         <div className="flex items-center justify-around h-16 px-2">
           {navItems.map((item) => {

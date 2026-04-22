@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+// Build trigger: mobile adaptation v2
 import Header from './components/Header';
 import MobileNavbar from './components/MobileNavbar';
 import Home from './pages/Home';
