@@ -9,10 +9,10 @@ Este documento es el **"Archivo Maestro"** de nuestra aplicación. Sirve como re
 **CercaYa** es un *Marketplace* geolocalizado en tiempo real diseñado para conectar a vecinos con vendedores ambulantes, locales físicos y empresas de servicios públicos (basuras, correo, gas) mediante una interfaz premium y altamente interactiva de mapas.
 
 ## 2. Pila Tecnológica (Arquitectura)
-*   **Frontend (Vitrina Visual):** React 18, Vite, Tailwind CSS (arquitectura Glassmorphism oscura), React-Leaflet (Mapas), Zustand (Manejo de estados globales estables) y Lucide Icons.
-*   **Backend (Cerebro):** Node.js con Express, Typescript. Protección perimetral manejada con variables de entorno y middlewares de validación nativos.
+*   **Frontend (Vitrina Visual):** React 18, Vite, Tailwind CSS (Arquitectura Mobile-First con Glassmorphism oscuro), React-Leaflet (Mapas), Zustand (Manejo de estados globales) y Lucide Icons.
+*   **Diseño UX:** Optimizado para el "Thumb-Zone" (zona del pulgar) con barra de navegación inferior persistente y diseño de una sola columna para dashboards móviles.
 *   **Red en Tiempo Real:** Socket.io (Permite ver el movimiento instantáneo).
-*   **Base de Datos (Almacén):** PostgreSQL. Manejo relacional de vendedores, reseñas y ubicaciones.
+*   **Base de Datos (Almacén):** PostgreSQL con PostGIS para consultas geoespaciales avanzadas.
 
 ## 3. Funcionalidades Principales (Core Features)
 
@@ -32,6 +32,11 @@ El corazón de la app es un mapa (estilo Waze/Uber) donde flotan marcadores pers
 ### 3.4. Motor de Leads (Conversión de Ventas Rápida)
 *   Integración directa de `wa.me/` generadora de Links en un clic hacia WhatsApp Business con texto pre-llenado "Vi tu perfil en CercaYa...".
 *   Tarjetas de usuario hiper-optimizadas con botones flotantes para contacto inmediato, diseñadas paramétricamente en tarjetas de cristal opaco (`glassmorphism`).
+### 3.5. Sistema de Auxilio e Incidentes (SOS - Próximamente)
+Visión de seguridad ciudadana donde los usuarios pueden reportar accidentes o incidentes críticos en tiempo real.
+*   **Reporte de Identidad:** El informante comparte nombre, celular y ubicación precisa de forma automática.
+*   **Canal Exclusivo para Rescatistas:** Los reportes solo son visibles y gestionables por personal autorizado (Bomberos, Ambulancias, Seguridad Pública).
+*   **Optimización de Respuesta:** Permite al personal de emergencia contactar directamente al ciudadano y navegar hacia el punto exacto mediante GPS.
 
 ## 4. Estrategia de Crecimiento & Monetización
 *(Planeación Comercial)*
@@ -39,6 +44,7 @@ El corazón de la app es un mapa (estilo Waze/Uber) donde flotan marcadores pers
 1.  **Suscripciones para Vendedores Pro:** Por $X usd, el comercio sobresale visualmente en el mapa y en el cajón magnético de búsqueda B2B.
 2.  **Soluciones Corporativas Flotilla:** Vender el SAAS a camiones de residuos, recolección y proveedores logísticos masivos, reduciéndoles sus quejas operativas y dando valor directo a la comunidad.
 3.  **Sistema "Ping" Patrocinado:** Micro-Transacciones que le permiten a la cafetería/negocio local "sacudir" masivamente el teléfono de los vecinos a 1 km a la redonda cuando lanza o remata mercancía.
+4.  **CercaYa Safety (B2G/B2B):** Licenciamiento del sistema de reporte de incidentes para alcaldías, aseguradoras y empresas de seguridad privada como canal de comunicación directa con la ciudadanía.
 
 ## 5. Medidas Centrales de Seguridad
 *Implementaciones a ser empujadas a Producción:*
