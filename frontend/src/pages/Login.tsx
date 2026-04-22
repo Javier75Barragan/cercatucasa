@@ -44,7 +44,7 @@ const Login = () => {
           <div className="inline-flex items-center justify-center w-20 h-20 glass rounded-3xl shadow-glow-md mb-8 relative group">
             <div className="absolute inset-0 bg-white/5 rounded-3xl blur-xl group-hover:bg-white/10 transition-all"></div>
             <img 
-              src="file:///C:/Users/Bafer/.gemini/antigravity/brain/63f63873-21fe-469a-9b3c-9d07fbdde7a2/cercaya_logo_premium_v1_radar_1775874218884.png" 
+              src="/logo.png" 
               alt="Logo CercaYa" 
               className="w-14 h-14 object-contain relative z-10 drop-shadow-[0_0_12px_rgba(255,255,255,0.8)] brightness-125"
             />
