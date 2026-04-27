@@ -182,6 +182,30 @@ export const initDB = async (): Promise<void> => {
       )
     `);
 
+    // Tabla de incidentes/emergencias
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS incidents (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        name VARCHAR(255) NOT NULL,
+        phone VARCHAR(20) NOT NULL,
+        latitude DECIMAL(10, 8) NOT NULL,
+        longitude DECIMAL(11, 8) NOT NULL,
+        type VARCHAR(50) NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        resolved_at TIMESTAMP,
+        resolved_by UUID REFERENCES users(id),
+        notes TEXT
+      )
+    `);
+
+    // Índices para incidentes
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_incidents_status ON incidents(status)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_incidents_location ON incidents(latitude, longitude)`);
+
     console.log('✅ Base de datos inicializada correctamente');
   } catch (error) {
     console.error('❌ Error inicializando base de datos:', error);
