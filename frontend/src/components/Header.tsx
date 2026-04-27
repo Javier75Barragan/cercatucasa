@@ -121,7 +121,7 @@ const Header = () => {
                   Mis Alertas
                 </Link>
               )}
-              {(user?.role === 'seller' || user?.role === 'customer') && (
+              {isAuthenticated && (user?.role === 'seller' || user?.role === 'customer') && (
                 <Link
                   to="/vendor/dashboard"
                   className="px-4 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg font-medium text-sm transition-all duration-200"
@@ -219,7 +219,7 @@ const Header = () => {
 
             {/* Mobile menu button - Still useful for secondary actions like Logout */}
             <div className="md:hidden flex items-center gap-2">
-              {user?.role === 'seller' && (
+              {isAuthenticated && (user?.role === 'seller' || user?.role === 'customer') && (
                 <button
                   onClick={handleToggleOnline}
                   className={`relative w-9 h-5 mr-1 rounded-full transition-all duration-300 ${

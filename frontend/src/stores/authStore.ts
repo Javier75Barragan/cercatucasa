@@ -48,7 +48,11 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'cercaya-auth',
-      partialize: (state) => ({ user: state.user, token: state.token }),
+      partialize: (state) => ({ 
+        user: state.user, 
+        token: state.token,
+        isAuthenticated: state.isAuthenticated 
+      }),
     }
   )
 );
