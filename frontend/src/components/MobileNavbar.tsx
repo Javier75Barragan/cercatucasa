@@ -13,7 +13,7 @@ const MobileNavbar = () => {
     { label: 'Perfil', icon: User, path: isAuthenticated ? '/profile' : '/login' },
   ];
 
-  if (user?.role === 'seller') {
+  if (user?.role === 'seller' || user?.role === 'customer') {
     navItems.splice(2, 0, { label: 'Negocio', icon: Building2, path: '/vendor/dashboard', auth: true });
   }
 

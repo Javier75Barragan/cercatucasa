@@ -121,7 +121,7 @@ const Header = () => {
                   Mis Alertas
                 </Link>
               )}
-              {user?.role === 'seller' && (
+              {(user?.role === 'seller' || user?.role === 'customer') && (
                 <Link
                   to="/vendor/dashboard"
                   className="px-4 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg font-medium text-sm transition-all duration-200"
