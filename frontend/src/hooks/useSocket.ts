@@ -1,18 +1,18 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../stores/authStore';
 import { useVendorsStore } from '../stores/vendorsStore';
-import { Vendor } from '../types';
+import { Vendor, Incident } from '../types';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
 
-export const useSocket = () => {
+export const useSocket = (onIncidentAlert?: (incident: Incident) => void) => {
   const socketRef = useRef<Socket | null>(null);
-  const { location } = useAuthStore();
+  const { location, token } = useAuthStore();
   const { addVendors, updateVendor } = useVendorsStore();
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
     if (!token) return;
 
     socketRef.current = io(SOCKET_URL, {
@@ -24,12 +24,13 @@ export const useSocket = () => {
 
     socket.on('connect', () => {
       console.log('🟢 WebSocket conectado');
-
-      // Unirse a la sala de ubicación si hay ubicación
-      if (location) {
+      setIsConnected(true);
+      // Si ya tenemos ubicación, unirse a la sala inmediatamente
+      const currentLocation = useAuthStore.getState().location;
+      if (currentLocation) {
         socket.emit('join-location', {
-          lat: location.lat,
-          lng: location.lng,
+          lat: currentLocation.lat,
+          lng: currentLocation.lng,
           radius: 200,
         });
       }
@@ -37,6 +38,7 @@ export const useSocket = () => {
 
     socket.on('disconnect', () => {
       console.log('🔴 WebSocket desconectado');
+      setIsConnected(false);
     });
 
     socket.on('nearby-vendors', (vendors: Vendor[]) => {
@@ -65,10 +67,31 @@ export const useSocket = () => {
       });
     });
 
+    // Alertas de incidentes para vendedores
+    socket.on('incident-alert', (data: { incident: Incident }) => {
+      console.log('🚨 Alerta de incidente recibida:', data.incident);
+      onIncidentAlert?.(data.incident);
+    });
+
+    socket.on('incident-status-updated', (data: { incidentId: string; status: string }) => {
+      console.log('📋 Estado de incidente actualizado:', data);
+    });
+
     return () => {
       socket.disconnect();
     };
-  }, [location, addVendors, updateVendor]);
+  }, [addVendors, updateVendor, token, onIncidentAlert]);
+
+  // Separate effect to join location when it changes, without reconnecting socket
+  useEffect(() => {
+    if (socketRef.current?.connected && location) {
+      socketRef.current.emit('join-location', {
+        lat: location.lat,
+        lng: location.lng,
+        radius: 200,
+      });
+    }
+  }, [location]);
 
   const joinLocation = useCallback((lat: number, lng: number, radius = 200) => {
     socketRef.current?.emit('join-location', { lat, lng, radius });
@@ -91,13 +114,42 @@ export const useSocket = () => {
     socketRef.current?.emit('toggle-visibility', { vendorId, isActive });
   }, []);
 
+  // Unirse a sala personal del vendedor para recibir alertas de incidentes
+  const joinVendorRoom = useCallback((vendorId: string) => {
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('join-vendor-room', { vendorId });
+      console.log(`🏪 Unido a sala vendor:${vendorId}`);
+    } else {
+      // Reintentar cuando se conecte
+      socketRef.current?.once('connect', () => {
+        socketRef.current?.emit('join-vendor-room', { vendorId });
+        console.log(`🏪 Unido a sala vendor:${vendorId} (retry)`);
+      });
+    }
+  }, []);
+
+  // Unirse a sala global de autoridades para recibir TODAS las alertas de incidentes
+  const joinAuthorityRoom = useCallback(() => {
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('join-authority-room');
+      console.log('🛡️ Unido a sala de autoridades');
+    } else {
+      socketRef.current?.once('connect', () => {
+        socketRef.current?.emit('join-authority-room');
+        console.log('🛡️ Unido a sala de autoridades (retry)');
+      });
+    }
+  }, []);
+
   return {
     socket: socketRef.current,
     joinLocation,
     leaveLocation,
     updateLocation,
     toggleVisibility,
-    isConnected: socketRef.current?.connected ?? false,
+    joinVendorRoom,
+    joinAuthorityRoom,
+    isConnected,
   };
 };
 

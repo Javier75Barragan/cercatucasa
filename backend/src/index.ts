@@ -17,6 +17,7 @@ import authRoutes from './routes/auth';
 import vendorRoutes from './routes/vendors';
 import productRoutes from './routes/products';
 import notificationRoutes from './routes/notifications';
+import incidentRoutes from './routes/incidents';
 
 dotenv.config();
 
@@ -61,6 +62,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/vendors', vendorRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/incidents', incidentRoutes);
 
 // 404
 app.use(notFoundHandler);

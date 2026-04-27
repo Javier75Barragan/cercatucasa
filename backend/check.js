@@ -1,0 +1,1 @@
+const { Client } = require('pg'); const client = new Client({ user: 'postgres', host: 'localhost', database: 'cercaya', password: 'Bafer1975', port: 5432 }); client.connect().then(() => client.query(SELECT * FROM vendor_locations WHERE vendor_id = '5f5242db-bc05-4ebf-8840-55dbe4eb1127')).then(res => { console.table(res.rows); client.end(); }).catch(console.error);

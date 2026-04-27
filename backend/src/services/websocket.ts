@@ -16,6 +16,20 @@ export const initializeWebSocket = (httpServer: HttpServer): Server => {
   io.on('connection', (socket) => {
     console.log(`🔌 Cliente conectado: ${socket.id}`);
 
+    // Autoridades se unen a la sala global de autoridades
+    socket.on('join-authority-room', async () => {
+      socket.join('authorities');
+      console.log(`🛡️ Autoridad ${socket.id} unida a sala de emergencias`);
+    });
+
+    // Vendedor se une a su sala personal para recibir alertas de incidentes
+    socket.on('join-vendor-room', async (data: { vendorId: string }) => {
+      const { vendorId } = data;
+      const vendorRoom = `vendor:${vendorId}`;
+      socket.join(vendorRoom);
+      console.log(`🏪 Vendedor ${vendorId} unido a sala ${vendorRoom}`);
+    });
+
     // Unirse a una sala de ubicación (para recibir actualizaciones de vendedores cercanos)
     socket.on('join-location', async (data: { lat: number; lng: number; radius?: number }) => {
       const { lat, lng, radius = 200 } = data;
@@ -73,18 +87,26 @@ export const initializeWebSocket = (httpServer: HttpServer): Server => {
           [vendorId]
         );
 
-        // Insertar nueva ubicación
-        await query(
-          `INSERT INTO vendor_locations (vendor_id, latitude, longitude, accuracy, is_active)
-           VALUES ($1, $2, $3, $4, true)
-           ON CONFLICT (vendor_id) DO UPDATE SET
-             latitude = EXCLUDED.latitude,
-             longitude = EXCLUDED.longitude,
-             accuracy = EXCLUDED.accuracy,
-             is_active = true,
-             updated_at = CURRENT_TIMESTAMP`,
-          [vendorId, lat, lng, accuracy]
+        // Verificar si ya existe
+        const existing = await query(
+          `SELECT id FROM vendor_locations WHERE vendor_id = $1`,
+          [vendorId]
         );
+
+        if (existing.rows.length > 0) {
+          await query(
+            `UPDATE vendor_locations 
+             SET latitude = $1, longitude = $2, accuracy = $3, is_active = true, updated_at = CURRENT_TIMESTAMP
+             WHERE vendor_id = $4`,
+            [lat, lng, accuracy, vendorId]
+          );
+        } else {
+          await query(
+            `INSERT INTO vendor_locations (vendor_id, latitude, longitude, accuracy, is_active)
+             VALUES ($1, $2, $3, $4, true)`,
+            [vendorId, lat, lng, accuracy]
+          );
+        }
 
         // Notificar a clientes cercanos
         const nearbyRooms = getNearbyRooms(lat, lng);
@@ -180,4 +202,7 @@ export const getIO = (): Server => {
   return io;
 };
 
-export default { initializeWebSocket, getIO };
+// Alias para compatibilidad con imports existentes
+export const getIo = getIO;
+
+export default { initializeWebSocket, getIO, getIo };

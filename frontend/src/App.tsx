@@ -7,19 +7,26 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import VendorDashboard from './pages/VendorDashboard';
+import AuthorityDashboard from './pages/AuthorityDashboard';
 import Profile from './pages/Profile';
 import Alerts from './pages/Alerts';
 import { useAuthStore } from './stores/authStore';
 
 // Componente para rutas protegidas
-const ProtectedRoute = ({ children, requireSeller = false }: { children: React.ReactNode; requireSeller?: boolean }) => {
+const ProtectedRoute = ({ children, requireSeller = false, roles }: { children: React.ReactNode; requireSeller?: boolean, roles?: string[] }) => {
   const { isAuthenticated, user } = useAuthStore();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requireSeller && user?.role !== 'seller') {
+  if (roles && !roles.includes(user?.role || '')) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Permitir customer y seller para vendor/dashboard (para que puedan crear su primer negocio)
+  // Solo requerir seller para otras rutas específicas de vendedores
+  if (requireSeller && user?.role !== 'seller' && user?.role !== 'customer') {
     return <Navigate to="/" replace />;
   }
 
@@ -39,8 +46,16 @@ function App() {
             <Route
               path="/vendor/dashboard"
               element={
-                <ProtectedRoute requireSeller>
+                <ProtectedRoute roles={['seller', 'admin']}>
                   <VendorDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/authority/dashboard"
+              element={
+                <ProtectedRoute roles={['authority', 'admin']}>
+                  <AuthorityDashboard />
                 </ProtectedRoute>
               }
             />

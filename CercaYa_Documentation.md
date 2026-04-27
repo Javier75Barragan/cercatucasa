@@ -21,9 +21,11 @@ El corazón de la app es un mapa (estilo Waze/Uber) donde flotan marcadores pers
 *   **Auto-ubicación:** Detecta por GPS el centro de gravedad del usuario y pinta un radar a su alrededor (Ej: 200 a 1000 metros).
 *   **Búsqueda Rápida:** Botones de enrutamiento al clic en los marcadores con Google Maps nativo.
 
-### 3.2. Panel de Inteligencia & Rastreo
+### 3.2. Panel de Inteligencia, Rastreo y Notificaciones (Radar)
 *   **Radar Fantasma (Panel):** Guarda un registro temporal de los negocios móviles ("Vendedores ambulantes") que pasaron cerca de casa en las últimas horas, incluso si ya no están allí. Permite ver el sello de "Visto hace 12 mins".
-*   **Rastreo en Vivo Módulo B2B (Nuevo):** Si el vendedor pertenece a una categoría tipo Flota (Mensajería, Gas, Basura), disponemos del botón "📍 Rastrear en Vivo". Este dibuja una **Línea de Conexión Dinámica** que enlaza al usuario con el camión, encuadrando automáticamente la cámara de la pantalla a nivel de mapa para no perder la entrega de vista.
+*   **Rastreo en Vivo Módulo B2B:** Si el vendedor pertenece a una categoría tipo Flota (Mensajería, Gas, Basura), disponemos del botón "📍 Rastrear en Vivo". Este dibuja una **Línea de Conexión Dinámica** que enlaza al usuario con el camión, encuadrando automáticamente la cámara de la pantalla a nivel de mapa para no perder la entrega de vista.
+*   **Notificaciones en Tiempo Real (En App):** El sistema escanea en intervalos regulares (ej. 30 segundos) si nuevos vendedores han entrado al radio de visión del usuario. Al detectar una nueva entrada, emite una alerta sonora inmediata para notificar la cercanía del comercio/servicio.
+*   **Alertas Inteligentes (Push/Background):** Sistema de reglas automatizadas (`/check`) donde el usuario define preferencias (ej. "Avisar cuando pase el camión de la basura a menos de 200m, los días Lunes"). El motor cruza la ubicación en vivo de los vendedores con estas reglas (incluyendo días y horas de operación) para detonar notificaciones push al celular sin necesidad de tener la app abierta.
 
 ### 3.3. Ecosistema de Confianza (Reputación)
 *   **Calificaciones:** Sistema de clasificación estricta de 1 a 5 estrellas programado en React. Los perfiles solo muestran reputaciones con alta participación.

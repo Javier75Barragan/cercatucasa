@@ -117,6 +117,24 @@ export const notificationsApi = {
     api.post('/notifications/check', data),
 };
 
+// Incidents API
+export const incidentsApi = {
+  getTypes: () =>
+    api.get('/incidents/types'),
+
+  create: (data: { name: string; phone: string; latitude: number; longitude: number; type: string; description?: string }) =>
+    api.post('/incidents', data),
+
+  getNearby: (params: { lat: number; lng: number; radius?: number; type?: string; status?: string }) =>
+    api.get('/incidents/nearby', { params }),
+
+  updateStatus: (id: string, status: 'pending' | 'in_progress' | 'resolved' | 'cancelled', notes?: string) =>
+    api.patch(`/incidents/${id}/status`, { status, notes }),
+
+  getMyReports: () =>
+    api.get('/incidents/my-reports'),
+};
+
 export default api;
 
 import { Vendor, Product, NotificationAlert } from '../types';

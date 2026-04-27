@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { MapPin, Power, Store, Package, X, Clock, Signal, Edit3, Heart, Eye, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { MapPin, Power, Store, Package, X, Clock, Signal, Edit3, Heart, Eye, Loader2, AlertTriangle, Bell, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useSocket } from '../hooks/useSocket';
 import { vendorsApi } from '../services/api';
-import { Vendor, Category } from '../types';
+import { Vendor, Category, Incident } from '../types';
 
 const DAYS = [
   { key: 'monday', label: 'Lunes' },
@@ -26,13 +27,22 @@ const VENDOR_TYPES = [
 const VendorDashboard = () => {
   const { user, location, setLocation } = useAuthStore();
   const { location: geoLocation } = useGeolocation();
-  const { updateLocation, toggleVisibility, isConnected } = useSocket();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [isActive, setIsActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
+  // Estado de alertas de incidentes en tiempo real
+  const [incidentAlerts, setIncidentAlerts] = useState<Incident[]>([]);
+  const [showIncidentPanel, setShowIncidentPanel] = useState(false);
+
+  const handleIncidentAlert = useCallback((incident: Incident) => {
+    setIncidentAlerts(prev => [incident, ...prev].slice(0, 10));
+    setShowIncidentPanel(true);
+  }, []);
+
+  const { updateLocation, toggleVisibility, joinVendorRoom, isConnected } = useSocket(handleIncidentAlert);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -92,12 +102,8 @@ const VendorDashboard = () => {
         const vendorData = response.data.data;
         setVendor(vendorData);
         setIsActive(!!vendorData.online_status);
-        
-        // Sincronizar rol si es necesario (el backend ya lo cambió)
-        if (user.role === 'customer') {
-           // En una app real llamaríamos a authApi.getMe() para refrescar el store
-           // Por ahora, el dashboard seguirá funcionando porque la ruta ya está permitida
-        }
+        // Unirse a la sala personal del vendedor para recibir alertas de incidentes
+        joinVendorRoom(vendorData.id);
       }
     } catch (error) {
       console.error('Error cargando vendor:', error);
@@ -107,7 +113,12 @@ const VendorDashboard = () => {
   };
 
   const handleToggleActive = async () => {
-    if (!vendor || !location) return;
+    if (!vendor) return;
+    
+    if (!location) {
+      alert('Necesitamos acceso a tu ubicación GPS para poder transmitirte a los clientes cercanos. Por favor, actívala en tu navegador.');
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -148,15 +159,29 @@ const VendorDashboard = () => {
       return;
     }
 
+    // Verificar ubicación
+    if (!location) {
+      setFormError('Necesitamos tu ubicación para registrar el negocio. Activa el GPS e intenta de nuevo.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const response = await vendorsApi.create({ ...formData, type: formData.type as 'store' | 'ambulant' | 'pharmacy' | 'service', schedule: formData.schedule as any });
+      const response = await vendorsApi.create({
+        ...formData,
+        type: formData.type as 'store' | 'ambulant' | 'pharmacy' | 'service',
+        schedule: formData.schedule as any,
+        latitude: location.lat,
+        longitude: location.lng,
+        accuracy: 10,
+      });
 
       if (response.data.success) {
         setVendor(response.data.data);
         setIsModalOpen(false);
-        // Opcional: refrescar la página o el estado global para actualizar el rol de la interfaz
-        window.location.reload(); // Forma más rápida de asegurar que todos los interceptores y roles se actualicen
+        // Actualizar el rol del usuario en el store
+        const { updateUser } = useAuthStore.getState();
+        updateUser({ role: 'seller' });
       } else {
         setFormError(response.data.error || 'Error al crear el negocio');
       }
@@ -412,6 +437,23 @@ const VendorDashboard = () => {
                  <MapPin size={22} />
                </button>
              )}
+
+             {/* Botón de alertas de incidentes */}
+             <button
+               onClick={() => setShowIncidentPanel(prev => !prev)}
+               className={`relative p-4 rounded-2xl border transition-all ${
+                 incidentAlerts.length > 0
+                   ? 'bg-red-500/20 border-red-500/40 text-red-400 animate-pulse'
+                   : 'glass border-white/10 text-white/60 hover:text-white'
+               }`}
+             >
+               <Bell size={22} />
+               {incidentAlerts.length > 0 && (
+                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-black text-white">
+                   {incidentAlerts.length}
+                 </span>
+               )}
+             </button>
           </div>
         </div>
 
@@ -512,6 +554,100 @@ const VendorDashboard = () => {
            </div>
         </div>
       </div>
+
+      {/* Panel de Alertas de Incidentes en Tiempo Real */}
+      {showIncidentPanel && (
+        <div className="fixed inset-0 z-[900] flex items-end md:items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-surface-950 w-full max-w-lg md:rounded-[32px] rounded-t-[32px] border-t md:border border-white/10 shadow-dark-lg max-h-[80vh] overflow-hidden flex flex-col animate-slide-up">
+            {/* Header */}
+            <div className="p-6 border-b border-white/[0.06] flex items-center justify-between bg-red-500/5">
+              <div>
+                <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
+                  <AlertTriangle className="w-6 h-6 text-red-500" />
+                  Alertas de Incidentes
+                </h2>
+                <p className="text-xs text-white/40 mt-1">
+                  {incidentAlerts.length} alerta{incidentAlerts.length !== 1 ? 's' : ''} cerca de tu ubicación
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {incidentAlerts.length > 0 && (
+                  <button
+                    onClick={() => setIncidentAlerts([])}
+                    className="px-3 py-1.5 text-[10px] font-bold text-white/40 hover:text-white border border-white/10 rounded-lg transition-all"
+                  >
+                    Limpiar
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowIncidentPanel(false)}
+                  className="w-10 h-10 glass rounded-full flex items-center justify-center text-white/40 hover:text-white transition-all"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Lista de incidentes */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
+              {incidentAlerts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4 ring-1 ring-green-500/20">
+                    <CheckCircle className="w-8 h-8 text-green-500" />
+                  </div>
+                  <h3 className="text-white/80 font-semibold mb-1">Todo Tranquilo</h3>
+                  <p className="text-white/40 text-sm">No hay incidentes reportados cerca de ti.</p>
+                </div>
+              ) : (
+                incidentAlerts.map((incident, idx) => {
+                  const typeIcons: Record<string, string> = {
+                    accident: '🚗', medical: '🚑', fire: '🔥',
+                    police: '👮', road_block: '🚧', fallen_tree: '🌳',
+                    flood: '🌊', other: '⚠️',
+                  };
+                  const typeNames: Record<string, string> = {
+                    accident: 'Accidente de Tránsito', medical: 'Emergencia Médica',
+                    fire: 'Incendio', police: 'Incidente de Seguridad',
+                    road_block: 'Bloqueo de Vía', fallen_tree: 'Árbol Caído',
+                    flood: 'Inundación', other: 'Otro',
+                  };
+                  return (
+                    <div key={incident.id || idx} className="p-4 bg-red-500/5 border border-red-500/15 rounded-2xl">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-red-500/10 flex-shrink-0">
+                          {typeIcons[incident.type] || '⚠️'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-bold text-white text-sm">{typeNames[incident.type] || 'Incidente'}</h4>
+                            <span className="px-2 py-0.5 bg-red-500/20 border border-red-500/30 rounded-md text-[9px] font-bold text-red-400 uppercase">
+                              🚨 Nuevo
+                            </span>
+                          </div>
+                          <p className="text-xs text-white/60">Reportado por: <span className="text-white/80 font-medium">{incident.name}</span></p>
+                          {incident.description && (
+                            <p className="text-xs text-white/50 mt-1 line-clamp-2">{incident.description}</p>
+                          )}
+                          <div className="flex items-center justify-between mt-2">
+                            {incident.distance_meters !== undefined && (
+                              <span className="text-[10px] text-white/30">
+                                📍 {Math.round(incident.distance_meters)}m de distancia
+                              </span>
+                            )}
+                            <span className="text-[10px] text-white/30">
+                              {new Date(incident.created_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-export type UserRole = 'customer' | 'seller' | 'admin';
+export type UserRole = 'customer' | 'seller' | 'admin' | 'authority';
 
 export interface User {
   id: string;
@@ -115,4 +115,29 @@ export interface RegisterData {
   name: string;
   phone: string;
   role?: UserRole;
+}
+
+export interface Incident {
+  id: string;
+  user_id?: string;
+  name: string;
+  phone: string;
+  latitude: number;
+  longitude: number;
+  type: string;
+  status: 'pending' | 'in_progress' | 'resolved' | 'cancelled';
+  description?: string;
+  created_at: string;
+  updated_at?: string;
+  resolved_at?: string;
+  resolved_by?: string;
+  notes?: string;
+  distance_meters?: number;
+}
+
+export interface IncidentType {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
 }

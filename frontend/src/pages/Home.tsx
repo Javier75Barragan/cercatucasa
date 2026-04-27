@@ -1,10 +1,11 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { List, X, Navigation, Loader2, BellRing } from 'lucide-react';
+import { List, X, Navigation, Loader2, BellRing, AlertTriangle } from 'lucide-react';
 import Map from '../components/Map';
 import MapFilters from '../components/MapFilters';
 import VendorCard from '../components/VendorCard';
 import VendorDetails from '../components/VendorDetails';
 import RadarPanel from '../components/RadarPanel';
+import IncidentReportForm from '../components/IncidentReportForm';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useVendorsStore } from '../stores/vendorsStore';
 import { useAuthStore } from '../stores/authStore';
@@ -22,6 +23,7 @@ const Home = () => {
   const { vendors, setVendors, filters, setLoading, selectedVendor, isLoading } = useVendorsStore();
   const [showMobileList, setShowMobileList] = useState(false);
   const [showRadar, setShowRadar] = useState(false);
+  const [showIncidentForm, setShowIncidentForm] = useState(false);
   const [encounters, setEncounters] = useState<RadarEncounter[]>([]);
   
   // Audio for notifications
@@ -223,13 +225,24 @@ const Home = () => {
                 </button>
               </div>
 
-              <button
-                onClick={() => setShowMobileList(true)}
-                className="flex items-center gap-3 px-6 py-4 bg-primary-500 text-white rounded-2xl shadow-glow-sm font-bold text-sm active:scale-95 transition-all"
-              >
-                <List className="w-5 h-5" />
-                Ver Listado
-              </button>
+              <div className="flex flex-col gap-3 items-end">
+                {/* Botón emergencia */}
+                <button
+                  onClick={() => setShowIncidentForm(true)}
+                  className="p-4 bg-red-500/90 backdrop-blur-md rounded-2xl border border-red-400/30 shadow-2xl text-white active:scale-90 transition-all"
+                  title="Reportar emergencia"
+                >
+                  <AlertTriangle className="w-6 h-6" />
+                </button>
+
+                <button
+                  onClick={() => setShowMobileList(true)}
+                  className="flex items-center gap-3 px-6 py-4 bg-primary-500 text-white rounded-2xl shadow-glow-sm font-bold text-sm active:scale-95 transition-all"
+                >
+                  <List className="w-5 h-5" />
+                  Ver Listado
+                </button>
+              </div>
             </div>
 
             {/* Radar Panel Desktop/Overlay */}
@@ -241,6 +254,13 @@ const Home = () => {
 
             {/* Profile / Details Drawer */}
             <VendorDetails />
+
+            {/* Formulario de Reporte de Incidentes */}
+            <IncidentReportForm
+              isOpen={showIncidentForm}
+              onClose={() => setShowIncidentForm(false)}
+              onSuccess={() => setShowIncidentForm(false)}
+            />
           </>
         )}
       </div>

@@ -76,6 +76,15 @@ export const useGeolocation = (options?: PositionOptions) => {
     }
   }, []);
 
+  const simulateLocation = useCallback((lat = 7.065, lng = -73.84) => {
+    // Coordenadas de Barrancabermeja por defecto
+    setState({
+      location: { lat, lng, accuracy: 10 },
+      error: null,
+      isLoading: false,
+    });
+  }, []);
+
   const refreshLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setState((prev) => ({
@@ -94,19 +103,55 @@ export const useGeolocation = (options?: PositionOptions) => {
       maximumAge: 0,
       ...options,
     });
+    
+    // Auto-fallback en desarrollo si tarda mucho
+    if (import.meta.env.DEV) {
+      setTimeout(() => {
+        setState(prev => {
+          if (prev.isLoading) {
+            return {
+              location: { lat: 7.065, lng: -73.84, accuracy: 10 },
+              error: null,
+              isLoading: false,
+            };
+          }
+          return prev;
+        });
+      }, 5000);
+    }
   }, [handleSuccess, handleError, options]);
 
   useEffect(() => {
     startWatching();
+    
+    // Auto-fallback timeout for initial load in DEV
+    let fallbackTimer: ReturnType<typeof setTimeout>;
+    if (import.meta.env.DEV) {
+      fallbackTimer = setTimeout(() => {
+        setState(prev => {
+          if (prev.isLoading && !prev.location) {
+            console.log("Aplicando ubicación simulada por demora en GPS...");
+            return {
+              location: { lat: 7.065, lng: -73.84, accuracy: 10 },
+              error: null,
+              isLoading: false,
+            };
+          }
+          return prev;
+        });
+      }, 5000);
+    }
 
     return () => {
       stopWatching();
+      if (fallbackTimer) clearTimeout(fallbackTimer);
     };
   }, [startWatching, stopWatching]);
 
   return {
     ...state,
     refreshLocation,
+    simulateLocation,
     startWatching,
     stopWatching,
   };

@@ -1,13 +1,73 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Bell, User, LogOut, Zap, Building2 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+import { useSocket } from '../hooks/useSocket';
+import { useGeolocation } from '../hooks/useGeolocation';
+import { vendorsApi } from '../services/api';
 
 const Header = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
 
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(false); // Slider state
+  const [vendorId, setVendorId] = useState<string | null>(null);
+  
+  const { toggleVisibility, updateLocation } = useSocket();
+  const { location } = useGeolocation();
+
+  // Load vendor status
+  useEffect(() => {
+    const loadVendorStatus = async () => {
+      if (user?.role === 'seller') {
+        try {
+          const res = await vendorsApi.getMe();
+          if (res.data.success && res.data.data) {
+            setVendorId(res.data.data.id);
+            setIsOnline(!!res.data.data.online_status);
+          }
+        } catch (e) {
+          console.error('Error loading vendor for header', e);
+        }
+      }
+    };
+    loadVendorStatus();
+  }, [user]);
+
+  const handleToggleOnline = async () => {
+    let currentVendorId = vendorId;
+    
+    if (!currentVendorId) {
+      try {
+        const res = await vendorsApi.getMe();
+        if (res.data.success && res.data.data) {
+          currentVendorId = res.data.data.id;
+          setVendorId(currentVendorId);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    if (!currentVendorId) {
+      navigate('/vendor/dashboard');
+      return;
+    }
+    const newState = !isOnline;
+    
+    // Si intenta conectarse pero no hay GPS
+    if (newState && !location) {
+      alert('Necesitamos acceso a tu ubicación GPS para activarte en el radar. Por favor, permite el acceso a tu ubicación en el navegador.');
+      return;
+    }
+
+    setIsOnline(newState);
+    toggleVisibility(currentVendorId, newState);
+    if (newState && location) {
+      updateLocation(currentVendorId, location.lat, location.lng);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -79,6 +139,25 @@ const Header = () => {
             <div className="hidden md:flex items-center gap-3">
               {isAuthenticated ? (
                 <>
+                  {user?.role === 'seller' && (
+                    <div className="flex items-center gap-2.5 mr-2 bg-surface-900/50 px-3 py-1.5 rounded-xl border border-white/5">
+                      <div className="flex flex-col items-end leading-none">
+                        <span className={`text-[9px] font-bold uppercase tracking-wider transition-colors ${isOnline ? 'text-primary-400' : 'text-white/40'}`}>
+                          {isOnline ? 'En línea' : 'Desconectado'}
+                        </span>
+                      </div>
+                      <button
+                        onClick={handleToggleOnline}
+                        className={`relative w-10 h-5 rounded-full transition-all duration-300 ${
+                          isOnline ? 'bg-primary-500 shadow-[0_0_10px_rgba(249,131,7,0.4)]' : 'bg-white/10'
+                        }`}
+                      >
+                        <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-300 ${
+                          isOnline ? 'translate-x-5' : 'translate-x-0'
+                        }`} />
+                      </button>
+                    </div>
+                  )}
                   <button 
                     onClick={() => {
                        window.dispatchEvent(new CustomEvent('toggle-radar'));
@@ -140,6 +219,18 @@ const Header = () => {
 
             {/* Mobile menu button - Still useful for secondary actions like Logout */}
             <div className="md:hidden flex items-center gap-2">
+              {user?.role === 'seller' && (
+                <button
+                  onClick={handleToggleOnline}
+                  className={`relative w-9 h-5 mr-1 rounded-full transition-all duration-300 ${
+                    isOnline ? 'bg-primary-500 shadow-[0_0_10px_rgba(249,131,7,0.4)]' : 'bg-white/10'
+                  }`}
+                >
+                  <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-300 ${
+                    isOnline ? 'translate-x-4' : 'translate-x-0'
+                  }`} />
+                </button>
+              )}
               {isAuthenticated && (
                 <button 
                   onClick={() => window.dispatchEvent(new CustomEvent('toggle-radar'))}

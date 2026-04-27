@@ -59,6 +59,9 @@ router.post(
       website,
       address,
       schedule,
+      latitude,
+      longitude,
+      accuracy = 10,
     } = req.body;
 
     // Validaciones
@@ -92,6 +95,17 @@ router.post(
         JSON.stringify(schedule),
       ]
     );
+
+    const vendorId = result.rows[0].id;
+
+    // Si se proporciona ubicación, guardar en vendor_locations
+    if (latitude && longitude) {
+      await query(
+        `INSERT INTO vendor_locations (vendor_id, latitude, longitude, accuracy, is_active)
+         VALUES ($1, $2, $3, $4, true)`,
+        [vendorId, latitude, longitude, accuracy]
+      );
+    }
 
     // Actualizar rol del usuario a 'seller' si era 'customer'
     if (req.user!.role === 'customer') {
