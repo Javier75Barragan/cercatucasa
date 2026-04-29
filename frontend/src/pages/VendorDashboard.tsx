@@ -179,9 +179,16 @@ const VendorDashboard = () => {
       if (response.data.success) {
         setVendor(response.data.data);
         setIsModalOpen(false);
-        // Actualizar el rol del usuario en el store
-        const { updateUser } = useAuthStore.getState();
+        
+        // Actualizar el rol del usuario y el token en el store si se recibió uno nuevo
+        const { updateUser, setToken } = useAuthStore.getState();
         updateUser({ role: 'seller' });
+        
+        if (response.data.token) {
+          setToken(response.data.token);
+          // También actualizar en localStorage para el interceptor
+          localStorage.setItem('token', response.data.token);
+        }
       } else {
         setFormError(response.data.error || 'Error al crear el negocio');
       }

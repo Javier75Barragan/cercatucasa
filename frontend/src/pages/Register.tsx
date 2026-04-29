@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, Phone, ArrowRight, Store, UserCheck, Loader2 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
@@ -16,22 +16,45 @@ const Register = () => {
   const [error, setError] = useState<string | null>(null);
 
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { login, isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
+    console.log('📝 Registrando vendedor:', formData);
+
     try {
       const response = await authApi.register(formData);
+      console.log('✅ Respuesta backend:', response.data);
+
       if (response.data.success) {
+        console.log('🔑 Token recibido:', response.data.data.token ? 'OK' : 'NULL');
+        console.log('👤 Usuario recibido:', response.data.data.user);
+
         login(response.data.data.user, response.data.data.token);
-        navigate(formData.role === 'seller' ? '/vendor/dashboard' : '/');
+
+        // Verificar que el login guardó el token
+        const savedToken = localStorage.getItem('token');
+        console.log('💾 Token en localStorage:', savedToken ? 'OK' : 'NULL');
+
+        const targetRoute = formData.role === 'seller' ? '/vendor/dashboard' : '/';
+        console.log('🧭 Navegando a:', targetRoute);
+        navigate(targetRoute);
       } else {
+        console.error('❌ Error en respuesta:', response.data.error);
         setError(response.data.error || 'Error al registrarse');
       }
     } catch (err: any) {
+      console.error('❌ Error en registro:', err);
+      console.error('Response:', err.response);
       setError(err.response?.data?.error || 'Error al registrarse. Intenta de nuevo.');
     } finally {
       setIsLoading(false);

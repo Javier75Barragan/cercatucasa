@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../config/database';
-import { authenticate, authorize } from '../middleware/auth';
+import { authenticate, authorize, generateToken } from '../middleware/auth';
 import { optionalAuth } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponse, Vendor, VendorLocation, VendorSchedule } from '../types';
@@ -107,14 +107,24 @@ router.post(
       );
     }
 
+    let newToken: string | undefined;
+
     // Actualizar rol del usuario a 'seller' si era 'customer'
     if (req.user!.role === 'customer') {
       await query(`UPDATE users SET role = 'seller' WHERE id = $1`, [req.user!.userId]);
+      
+      // Generar nuevo token con el rol actualizado
+      newToken = generateToken({
+        userId: req.user!.userId,
+        email: req.user!.email,
+        role: 'seller'
+      });
     }
 
     const response: ApiResponse<Vendor> = {
       success: true,
       data: result.rows[0],
+      token: newToken,
       message: 'Vendedor creado exitosamente',
     };
 

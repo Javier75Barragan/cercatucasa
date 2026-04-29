@@ -36,6 +36,7 @@ const allowedOrigin = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.replace(
 app.use(cors({
   origin: [
     allowedOrigin,
+    'https://cercatucasa.vercel.app',
     'http://localhost:5173',
     'http://localhost:3000'
   ],

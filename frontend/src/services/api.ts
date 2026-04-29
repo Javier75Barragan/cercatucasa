@@ -14,7 +14,21 @@ const api: AxiosInstance = axios.create({
 // Request interceptor para agregar token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    let token = localStorage.getItem('token');
+    
+    // Fallback: intentar leer del estado persistido de Zustand si no está el token directo
+    if (!token) {
+      const authData = localStorage.getItem('cercaya-auth');
+      if (authData) {
+        try {
+          const parsed = JSON.parse(authData);
+          token = parsed.state?.token;
+        } catch (e) {
+          console.error('Error parsing auth data for token fallback', e);
+        }
+      }
+    }
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

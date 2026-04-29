@@ -131,6 +131,7 @@ export interface ContactRequest {
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
+  token?: string;
   error?: string;
   message?: string;
 }
