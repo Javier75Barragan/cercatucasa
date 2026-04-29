@@ -293,4 +293,30 @@ router.post(
   })
 );
 
+// RUTA DE PRUEBA DE DESPLIEGUE
+router.get('/test-deploy', (_req, res) => {
+  res.json({ success: true, message: 'Backend actualizado: 2026-04-29-16-38' });
+});
+
+// RUTA TEMPORAL DE LIMPIEZA - SE ELIMINARÁ DESPUÉS DE USAR
+router.all(
+  '/admin/cleanup-database-2026',
+  asyncHandler(async (_req, res) => {
+    console.log('🧹 Limpieza de producción iniciada...');
+    await query(`
+      TRUNCATE TABLE 
+        incidents, 
+        contact_requests, 
+        reviews, 
+        notification_alerts, 
+        products, 
+        vendor_locations, 
+        vendors, 
+        users 
+      CASCADE;
+    `);
+    res.json({ success: true, message: 'Base de datos de producción limpia' });
+  })
+);
+
 export default router;
