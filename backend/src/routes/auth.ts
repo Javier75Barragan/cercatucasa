@@ -272,4 +272,25 @@ router.put(
   })
 );
 
+// RUTA TEMPORAL DE LIMPIEZA - SE ELIMINARÁ DESPUÉS DE USAR
+router.post(
+  '/admin/cleanup-database-2026',
+  asyncHandler(async (_req, res) => {
+    console.log('🧹 Limpieza de producción iniciada...');
+    await query(`
+      TRUNCATE TABLE 
+        incidents, 
+        contact_requests, 
+        reviews, 
+        notification_alerts, 
+        products, 
+        vendor_locations, 
+        vendors, 
+        users 
+      CASCADE;
+    `);
+    res.json({ success: true, message: 'Base de datos de producción limpia' });
+  })
+);
+
 export default router;
