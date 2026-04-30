@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { query } from '../config/database';
-import { authenticate, authorize, generateToken } from '../middleware/auth';
-import { optionalAuth } from '../middleware/auth';
+import { authenticate, authorize, generateToken, optionalAuth } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { validate } from '../middleware/validate';
+import { createVendorSchema, updateVendorSchema, updateLocationSchema, toggleLocationSchema, reviewSchema } from '../schemas/vendors';
 import { ApiResponse, Vendor, VendorLocation, VendorSchedule } from '../types';
 
 const router = Router();
@@ -35,6 +36,7 @@ router.post(
   '/',
   authenticate,
   authorize('customer', 'seller', 'admin'),
+  validate(createVendorSchema),
   asyncHandler(async (req, res) => {
     // Verificar si ya tiene un negocio
     const existing = await query('SELECT id FROM vendors WHERE user_id = $1', [req.user!.userId]);
@@ -63,16 +65,6 @@ router.post(
       longitude,
       accuracy = 10,
     } = req.body;
-
-    // Validaciones
-    if (!name || !type || !category || !phone) {
-      const response: ApiResponse<null> = {
-        success: false,
-        error: 'Nombre, tipo, categoría y teléfono son requeridos',
-      };
-      res.status(400).json(response);
-      return;
-    }
 
     const result = await query<Vendor>(
       `INSERT INTO vendors (
@@ -295,6 +287,7 @@ router.put(
   '/:id',
   authenticate,
   authorize('seller', 'admin'),
+  validate(updateVendorSchema),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const userId = req.user!.userId;
@@ -365,18 +358,10 @@ router.post(
   '/:id/location',
   authenticate,
   authorize('seller', 'admin'),
+  validate(updateLocationSchema),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { latitude, longitude, accuracy = 10 } = req.body;
-
-    if (latitude === undefined || longitude === undefined) {
-      const response: ApiResponse<null> = {
-        success: false,
-        error: 'Latitud y longitud son requeridas',
-      };
-      res.status(400).json(response);
-      return;
-    }
 
     // Verificar propiedad
     if (req.user!.role !== 'admin') {
@@ -423,6 +408,7 @@ router.patch(
   '/:id/location/toggle',
   authenticate,
   authorize('seller', 'admin'),
+  validate(toggleLocationSchema),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { is_active } = req.body;
@@ -445,19 +431,11 @@ router.patch(
 router.post(
   '/:id/reviews',
   authenticate,
+  validate(reviewSchema),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { rating, comment } = req.body;
     const userId = req.user!.userId;
-
-    if (!rating || rating < 1 || rating > 5) {
-      const response: ApiResponse<null> = {
-        success: false,
-        error: 'La calificación debe estar entre 1 y 5',
-      };
-      res.status(400).json(response);
-      return;
-    }
 
     // Insertar reseña
     await query(

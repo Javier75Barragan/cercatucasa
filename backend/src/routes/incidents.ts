@@ -3,6 +3,8 @@ import { query } from '../config/database';
 import { authenticate, authorize } from '../middleware/auth';
 import { optionalAuth } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { validate } from '../middleware/validate';
+import { createIncidentSchema, updateIncidentStatusSchema } from '../schemas/incidents';
 import { ApiResponse } from '../types';
 import { getIO } from '../services/websocket';
 
@@ -40,18 +42,9 @@ router.get(
 router.post(
   '/',
   optionalAuth, // Permite usuarios no autenticados también
+  validate(createIncidentSchema),
   asyncHandler(async (req, res) => {
     const { name, phone, latitude, longitude, type, description } = req.body;
-
-    // Validaciones
-    if (!name || !phone || !latitude || !longitude || !type) {
-      const response: ApiResponse<null> = {
-        success: false,
-        error: 'Nombre, teléfono, ubicación y tipo de incidente son requeridos',
-      };
-      res.status(400).json(response);
-      return;
-    }
 
     if (!INCIDENT_TYPES.find(t => t.id === type)) {
       const response: ApiResponse<null> = {
@@ -222,18 +215,10 @@ router.patch(
   '/:id/status',
   authenticate,
   authorize('seller', 'admin', 'customer'),
+  validate(updateIncidentStatusSchema),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { status, notes } = req.body;
-
-    if (!status || !['pending', 'in_progress', 'resolved', 'cancelled'].includes(status)) {
-      const response: ApiResponse<null> = {
-        success: false,
-        error: 'Estado no válido',
-      };
-      res.status(400).json(response);
-      return;
-    }
 
     let updateSql = `UPDATE incidents SET status = $1, updated_at = CURRENT_TIMESTAMP`;
     const params: any[] = [status];

@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { query } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { validate } from '../middleware/validate';
+import { createNotificationAlertSchema, updateNotificationAlertSchema, checkNotificationsSchema } from '../schemas/notifications';
 import { ApiResponse, NotificationAlert } from '../types';
 
 const router = Router();
@@ -10,6 +12,7 @@ const router = Router();
 router.post(
   '/alerts',
   authenticate,
+  validate(createNotificationAlertSchema),
   asyncHandler(async (req, res) => {
     const {
       category,
@@ -20,15 +23,6 @@ router.post(
       schedule_end,
       days_of_week = [0, 1, 2, 3, 4, 5, 6],
     } = req.body;
-
-    if (!category) {
-      const response: ApiResponse<null> = {
-        success: false,
-        error: 'La categoría es requerida',
-      };
-      res.status(400).json(response);
-      return;
-    }
 
     const result = await query<NotificationAlert>(
       `INSERT INTO notification_alerts (
@@ -81,6 +75,7 @@ router.get(
 router.put(
   '/alerts/:id',
   authenticate,
+  validate(updateNotificationAlertSchema),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
@@ -197,17 +192,9 @@ router.delete(
 router.post(
   '/check',
   authenticate,
+  validate(checkNotificationsSchema),
   asyncHandler(async (req, res) => {
     const { latitude, longitude } = req.body;
-
-    if (!latitude || !longitude) {
-      const response: ApiResponse<null> = {
-        success: false,
-        error: 'Latitud y longitud son requeridas',
-      };
-      res.status(400).json(response);
-      return;
-    }
 
     // Obtener día de la semana actual (0 = domingo)
     const currentDay = new Date().getDay();

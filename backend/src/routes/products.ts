@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { query } from '../config/database';
 import { authenticate, authorize } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { validate } from '../middleware/validate';
+import { createProductSchema, updateProductSchema } from '../schemas/products';
 import { ApiResponse, Product } from '../types';
 
 const router = Router();
@@ -11,17 +13,9 @@ router.post(
   '/',
   authenticate,
   authorize('seller', 'admin'),
+  validate(createProductSchema),
   asyncHandler(async (req, res) => {
     const { vendor_id, name, description, price, currency = 'USD', photos = [], category } = req.body;
-
-    if (!vendor_id || !name || !category) {
-      const response: ApiResponse<null> = {
-        success: false,
-        error: 'ID del vendedor, nombre y categoría son requeridos',
-      };
-      res.status(400).json(response);
-      return;
-    }
 
     // Verificar propiedad
     if (req.user!.role !== 'admin') {
@@ -88,6 +82,7 @@ router.put(
   '/:id',
   authenticate,
   authorize('seller', 'admin'),
+  validate(updateProductSchema),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { name, description, price, currency, photos, category, is_available } = req.body;
