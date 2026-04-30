@@ -32,7 +32,15 @@ Durante esta sesión, el objetivo principal fue mitigar vulnerabilidades crític
 
 ### 🏗️ Infraestructura y Arquitectura (Fase 2)
 - **Mejora:** Transición de la inicialización inline de la base de datos (con queries directas en `database.ts`) a un flujo profesional de migraciones mediante `node-pg-migrate`.
-- **Añadido:** Configuración base para pruebas automatizadas con **Jest** (Backend) y **Vitest + Testing Library** (Frontend).
+- `tests/`: Configuración inicial de entorno de testing automatizado.
+  - Backend: `Jest` y `ts-jest`.
+  - Frontend: `Vitest` y `@testing-library/react`.
+
+### Cambios (Changed)
+- **Validación de Datos con Zod:**
+  - Se crearon esquemas completos para las rutas de `auth`, `vendors`, `products`, `incidents`, y `notifications`.
+  - Implementación del middleware `validate.ts` en todos los endpoints de modificación (POST, PUT, PATCH).
+  - Reemplazo de validaciones manuales por validaciones tipadas y estrictas.
 - **Añadido:** Script inteligente (`backend/scripts/run-migrations.js`) que compila la URL de la base de datos leyendo las variables del entorno del sistema para facilitar los despliegues.
 
 ### 🛡️ Seguridad Avanzada (WebSockets y Tokens)
