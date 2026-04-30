@@ -2,8 +2,10 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import rateLimit from 'express-rate-limit';
 import { query } from '../config/database';
-import { generateToken, authenticate } from '../middleware/auth';
+import { generateToken, generateRefreshToken, authenticate, verifyToken } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { validate } from '../middleware/validate';
+import { registerSchema, loginSchema, updateProfileSchema, updatePasswordSchema, refreshTokenSchema } from '../schemas/auth';
 import { User, ApiResponse } from '../types';
 
 const router = Router();
@@ -24,42 +26,12 @@ const authLimiter = rateLimit({
 router.post(
   '/register',
   authLimiter,
+  validate(registerSchema),
   asyncHandler(async (req, res) => {
     try {
       const { email, password, name, phone, role = 'customer' } = req.body;
 
       console.log('📥 Datos recibidos:', { email, name, phone, role });
-
-      // Validaciones básicas
-      if (!email || !password || !name || !phone) {
-        const response: ApiResponse<null> = {
-          success: false,
-          error: 'Faltan campos requeridos',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      // Validar email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        const response: ApiResponse<null> = {
-          success: false,
-          error: 'Email inválido',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      // Validar contraseña
-      if (password.length < 6) {
-        const response: ApiResponse<null> = {
-          success: false,
-          error: 'La contraseña debe tener al menos 6 caracteres',
-        };
-        res.status(400).json(response);
-        return;
-      }
 
       // Hash de contraseña
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -73,15 +45,24 @@ router.post(
       );
 
       const user = result.rows[0];
-      const token = generateToken({
+      const payload = {
         userId: user.id,
         email: user.email,
         role: user.role,
-      });
+      };
+      
+      const token = generateToken(payload);
+      const refreshToken = generateRefreshToken(payload);
 
-      const response: ApiResponse<{ user: typeof user; token: string }> = {
+      // Guardar refresh token en BD
+      await query(
+        `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, CURRENT_TIMESTAMP + INTERVAL '7 days')`,
+        [user.id, refreshToken]
+      );
+
+      const response: ApiResponse<{ user: typeof user; token: string; refreshToken: string }> = {
         success: true,
-        data: { user, token },
+        data: { user, token, refreshToken },
         message: 'Usuario registrado exitosamente',
       };
 
@@ -119,17 +100,9 @@ router.post(
 router.post(
   '/login',
   authLimiter,
+  validate(loginSchema),
   asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      const response: ApiResponse<null> = {
-        success: false,
-        error: 'Email y contraseña son requeridos',
-      };
-      res.status(400).json(response);
-      return;
-    }
 
     // Buscar usuario
     const result = await query<User>(
@@ -169,22 +142,86 @@ router.post(
       return;
     }
 
-    const token = generateToken({
+    const payload = {
       userId: user.id,
       email: user.email,
       role: user.role,
-    });
+    };
+    
+    const token = generateToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    // Guardar refresh token
+    await query(
+      `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, CURRENT_TIMESTAMP + INTERVAL '7 days')`,
+      [user.id, refreshToken]
+    );
 
     // Eliminar password del objeto de respuesta
     const { password: _, ...userWithoutPassword } = user;
 
-    const response: ApiResponse<{ user: typeof userWithoutPassword; token: string }> = {
+    const response: ApiResponse<{ user: typeof userWithoutPassword; token: string; refreshToken: string }> = {
       success: true,
-      data: { user: userWithoutPassword, token },
+      data: { user: userWithoutPassword, token, refreshToken },
       message: 'Login exitoso',
     };
 
     res.json(response);
+  })
+);
+
+// Refresh Token
+router.post(
+  '/refresh',
+  authLimiter,
+  validate(refreshTokenSchema),
+  asyncHandler(async (req, res) => {
+    const { refreshToken } = req.body;
+
+    // Verificar si el token existe en BD y no ha expirado
+    const result = await query(
+      `SELECT user_id FROM refresh_tokens WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP`,
+      [refreshToken]
+    );
+
+    if (result.rows.length === 0) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: 'Refresh token inválido o expirado',
+      };
+      res.status(401).json(response);
+      return;
+    }
+
+    try {
+      const decoded = verifyToken(refreshToken);
+      const payload = {
+        userId: decoded.userId,
+        email: decoded.email,
+        role: decoded.role,
+      };
+      
+      const newToken = generateToken(payload);
+      const newRefreshToken = generateRefreshToken(payload);
+
+      // Rotar el token en BD
+      await query(
+        `UPDATE refresh_tokens SET token = $1, expires_at = CURRENT_TIMESTAMP + INTERVAL '7 days' WHERE token = $2`,
+        [newRefreshToken, refreshToken]
+      );
+
+      res.json({
+        success: true,
+        data: { token: newToken, refreshToken: newRefreshToken }
+      });
+    } catch (error) {
+      await query(`DELETE FROM refresh_tokens WHERE token = $1`, [refreshToken]);
+      const response: ApiResponse<null> = {
+        success: false,
+        error: 'Refresh token inválido',
+      };
+      res.status(401).json(response);
+    }
   })
 );
 
@@ -221,6 +258,7 @@ router.get(
 router.put(
   '/me',
   authenticate,
+  validate(updateProfileSchema),
   asyncHandler(async (req, res) => {
     const { name, phone, avatar_url } = req.body;
 
@@ -249,6 +287,7 @@ router.put(
 router.put(
   '/password',
   authenticate,
+  validate(updatePasswordSchema),
   asyncHandler(async (req, res) => {
     const { currentPassword, newPassword } = req.body;
 

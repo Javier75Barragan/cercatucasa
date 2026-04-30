@@ -13,6 +13,7 @@ Este documento es el **"Archivo Maestro"** de nuestra aplicación. Sirve como re
 *   **Diseño UX:** Optimizado para el "Thumb-Zone" (zona del pulgar) con barra de navegación inferior persistente y diseño de una sola columna para dashboards móviles.
 *   **Red en Tiempo Real:** Socket.io (Permite ver el movimiento instantáneo).
 *   **Base de Datos (Almacén):** PostgreSQL con PostGIS para consultas geoespaciales avanzadas.
+*   **Tooling y Desarrollo Asistido por IA:** Ecosistema integrado con *Antigravity Skills* (QA, Full-Stack, Security) y herramientas *AITMPL* (Integración MCP con PostgreSQL, revisión de código automatizada).
 
 ## 3. Funcionalidades Principales (Core Features)
 
@@ -49,7 +50,10 @@ Visión de seguridad ciudadana donde los usuarios pueden reportar accidentes o i
 4.  **CercaYa Safety (B2G/B2B):** Licenciamiento del sistema de reporte de incidentes para alcaldías, aseguradoras y empresas de seguridad privada como canal de comunicación directa con la ciudadanía.
 
 ## 5. Medidas Centrales de Seguridad
-*Implementaciones a ser empujadas a Producción:*
-*   **Express-Rate-Limit:** Bloquea los ataques continuos o robots rusos limitando las entradas fallidas de inicios de sesión.
+*Implementadas y Activas en el Entorno:*
+*   **Rate-Limiting (Fuerza Bruta):** Bloqueo de ataques continuos limitando los intentos de inicio de sesión y registro a 10 peticiones cada 15 minutos (`express-rate-limit`).
+*   **Criptografía Robusta:** Hasheo seguro de contraseñas de usuarios empleando la librería `bcrypt` nativa.
+*   **Protección de Credenciales (JWT & Entorno):** El servidor implementa un *Fail-Safe* en el arranque; se aborta si falta la clave `JWT_SECRET`. Además, el archivo `.gitignore` bloquea estrictamente cualquier archivo `.env`.
+*   **Prevención de Accesos Destructivos:** Todos los endpoints administrativos o de *cleanup* están autenticados o desactivados.
 *   **CORS y Helmet:** Restricción rígida desde qué páginas web (nuestra app) la base de datos acepta información HTTP.
 *   **Zod Data Protection:** Blindaje de base de datos de inyecciones XSS, impidiendo que hackers metan scripts de código disfrazado en nombres de usuario y descripciones.

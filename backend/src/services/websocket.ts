@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import { query } from '../config/database';
+import { verifyToken } from '../middleware/auth';
 
 let io: Server;
 
@@ -13,8 +14,19 @@ export const initializeWebSocket = (httpServer: HttpServer): Server => {
     },
   });
 
+  io.use((socket, next) => {
+    const token = socket.handshake.auth.token || socket.handshake.headers['authorization']?.replace('Bearer ', '');
+    if (!token) return next(new Error('Authentication required'));
+    try {
+      socket.data.user = verifyToken(token);
+      next();
+    } catch (error) {
+      next(new Error('Invalid or expired token'));
+    }
+  });
+
   io.on('connection', (socket) => {
-    console.log(`🔌 Cliente conectado: ${socket.id}`);
+    console.log(`🔌 Cliente conectado: ${socket.id}, Usuario: ${socket.data.user.email}`);
 
     // Autoridades se unen a la sala global de autoridades
     socket.on('join-authority-room', async () => {
@@ -25,9 +37,20 @@ export const initializeWebSocket = (httpServer: HttpServer): Server => {
     // Vendedor se une a su sala personal para recibir alertas de incidentes
     socket.on('join-vendor-room', async (data: { vendorId: string }) => {
       const { vendorId } = data;
-      const vendorRoom = `vendor:${vendorId}`;
-      socket.join(vendorRoom);
-      console.log(`🏪 Vendedor ${vendorId} unido a sala ${vendorRoom}`);
+      
+      try {
+        // Verificar que el usuario es dueño del vendedor
+        const vendorCheck = await query(`SELECT id FROM vendors WHERE id = $1 AND user_id = $2`, [vendorId, socket.data.user.userId]);
+        if (vendorCheck.rows.length === 0) {
+          return socket.emit('error', { message: 'No autorizado para esta sala' });
+        }
+        
+        const vendorRoom = `vendor:${vendorId}`;
+        socket.join(vendorRoom);
+        console.log(`🏪 Vendedor ${vendorId} unido a sala ${vendorRoom}`);
+      } catch (error) {
+        console.error('Error al unirse a sala de vendedor:', error);
+      }
     });
 
     // Unirse a una sala de ubicación (para recibir actualizaciones de vendedores cercanos)
@@ -81,6 +104,12 @@ export const initializeWebSocket = (httpServer: HttpServer): Server => {
       const { vendorId, lat, lng, accuracy = 10 } = data;
 
       try {
+        // Verificar propiedad
+        const vendorCheck = await query(`SELECT id FROM vendors WHERE id = $1 AND user_id = $2`, [vendorId, socket.data.user.userId]);
+        if (vendorCheck.rows.length === 0) {
+          return socket.emit('location-error', { error: 'No autorizado para actualizar ubicación' });
+        }
+
         // Desactivar ubicaciones anteriores
         await query(
           `UPDATE vendor_locations SET is_active = false WHERE vendor_id = $1`,
@@ -132,6 +161,12 @@ export const initializeWebSocket = (httpServer: HttpServer): Server => {
       const { vendorId, isActive } = data;
 
       try {
+        // Verificar propiedad
+        const vendorCheck = await query(`SELECT id FROM vendors WHERE id = $1 AND user_id = $2`, [vendorId, socket.data.user.userId]);
+        if (vendorCheck.rows.length === 0) {
+          return socket.emit('visibility-error', { error: 'No autorizado para cambiar visibilidad' });
+        }
+
         await query(
           `UPDATE vendor_locations SET is_active = $1 WHERE vendor_id = $2`,
           [isActive, vendorId]

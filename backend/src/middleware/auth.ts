@@ -21,7 +21,13 @@ if (!JWT_SECRET) {
 
 export const generateToken = (payload: Omit<JWTPayload, 'iat' | 'exp'>): string => {
   return jwt.sign(payload as any, JWT_SECRET, {
-    expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any,
+    expiresIn: (process.env.JWT_EXPIRES_IN || '15m') as any,
+  });
+};
+
+export const generateRefreshToken = (payload: Omit<JWTPayload, 'iat' | 'exp'>): string => {
+  return jwt.sign(payload as any, JWT_SECRET, {
+    expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any,
   });
 };
 
