@@ -1,196 +1,56 @@
-# CercaYa 🗺️
+# CercaYa 📍
 
-[![Deploy to Railway](https://railway.app/button.svg)](https://railway.app)
-[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com)
+CercaYa es una plataforma hiperlocal diseñada para conectar a las comunidades con vendedores locales y ambulantes en tiempo real. 
 
-Aplicación que conecta vendedores ambulantes, tiendas de barrio y servicios locales con clientes cercanos en tiempo real.
+## 🚀 Características Principales
 
----
+- **Mapa en Tiempo Real**: Encuentra vendedores cercanos con ubicación actualizada vía WebSockets.
+- **Radar de Actividad**: Visualiza los recorridos recientes de los vendedores en las últimas 2 horas.
+- **Categorías Inteligentes**: 17 categorías que cubren desde frutas y verduras hasta servicios municipales.
+- **Alertas de Seguridad**: Reporte de incidentes y notificaciones de emergencia para la comunidad.
+- **Dashboard para Vendedores**: Gestión de productos, horarios y visibilidad "En el Aire".
 
-**📚 Documentación:**
-
-- [📊 Análisis del Proyecto](./ANALISIS_PROYECTO.md)
-- [🚀 Guía de Deploy](./DEPLOY.md)
-- [✅ Checklist Deploy](./CHECKLIST_DEPLOY.md)
-
-## Características ✨
-
-- 📍 **Mapa en tiempo real** con vendedores activos en tu zona
-- 🔍 **Filtros por categoría** (verduras, lácteos, farmacia, mensajería, etc.)
-- 🔔 **Alertas inteligentes** para notificarte cuando pase un vendedor específico
-- 💬 **Contacto directo** vía WhatsApp
-- 📊 **Panel de vendedor** para gestionar visibilidad y productos
-- ⚡ **Actualizaciones en tiempo real** usando WebSocket
-
-## Stack Tecnológico 🛠️
+## 🛠️ Stack Tecnológico
 
 ### Backend
-- Node.js + Express + TypeScript
-- PostgreSQL + PostGIS
-- Socket.io (WebSockets)
-- JWT (autenticación)
-- bcrypt (hashing)
+- **Node.js + Express**
+- **TypeScript**
+- **PostgreSQL + PostGIS** (Geolocalización avanzada)
+- **Socket.io** (Comunicación en tiempo real)
+- **JWT** (Autenticación segura)
 
 ### Frontend
-- React + TypeScript
-- Vite (build tool)
-- Tailwind CSS
-- Zustand (state management)
-- React Query
-- Leaflet (mapas)
-- Socket.io-client
+- **React + Vite**
+- **Tailwind CSS** (Diseño Premium)
+- **Zustand** (Gestión de estado)
+- **Leaflet** (Mapas interactivos)
+- **React Query** (Sincronización de datos)
 
-## Instalación 🚀
+## 📦 Instalación
 
-### Prerrequisitos
-- Node.js 18+
-- PostgreSQL 14+
+### Requisitos Previos
+- Node.js (v18+)
+- PostgreSQL 14+ con extensión PostGIS
 
-### 1. Clonar y configurar
+### Backend
+1. Entrar en la carpeta backend: `cd backend`
+2. Instalar dependencias: `npm install`
+3. Configurar `.env` (ver `.env.example`)
+4. Inicializar base de datos: `npm run dev` (ejecuta `initDB()`)
 
-```bash
-cd CercaYa
-```
+### Frontend
+1. Entrar en la carpeta frontend: `cd frontend`
+2. Instalar dependencias: `npm install`
+3. Iniciar modo desarrollo: `npm run dev`
 
-### 2. Configurar Backend
+## 🔐 Seguridad
 
-```bash
-cd backend
-npm install
+Este proyecto ha pasado por una auditoría de seguridad y cumple con los siguientes estándares:
+- Validación estricta de secretos de entorno.
+- Rate limiting en endpoints sensibles.
+- Comunicación en tiempo real autenticada.
+- Hashing de contraseñas con bcrypt.
 
-# Crear archivo .env
-cp .env.example .env
+## 📄 Licencia
 
-# Editar .env con tus credenciales
-database:
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=cercaya
-DB_USER=postgres
-DB_PASSWORD=tu_password
-
-JWT_SECRET=tu_secreto_jwt
-```
-
-### 3. Configurar Frontend
-
-```bash
-cd ../frontend
-npm install
-```
-
-### 4. Iniciar la aplicación
-
-**Terminal 1 - Backend:**
-```bash
-cd backend
-npm run dev
-```
-
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-npm run dev
-```
-
-La app estará disponible en `http://localhost:5173`
-
-## Estructura del Proyecto 📁
-
-```
-CercaYa/
-├── backend/
-│   ├── src/
-│   │   ├── config/         # Configuración DB
-│   │   ├── middleware/     # Auth, errores
-│   │   ├── routes/         # API routes
-│   │   ├── services/       # WebSocket, etc.
-│   │   └── types/          # TypeScript types
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── pages/          # Pages
-│   │   ├── hooks/          # Custom hooks
-│   │   ├── stores/         # Zustand stores
-│   │   ├── services/       # API calls
-│   │   └── types/          # TypeScript types
-│   ├── package.json
-│   └── vite.config.ts
-└── README.md
-```
-
-## API Endpoints 🌐
-
-### Autenticación
-- `POST /api/auth/register` - Registrar usuario
-- `POST /api/auth/login` - Iniciar sesión
-- `GET /api/auth/me` - Perfil del usuario
-
-### Vendedores
-- `GET /api/vendors/nearby?lat=&lng=&radius=` - Vendedores cercanos
-- `GET /api/vendors/:id` - Detalle de vendedor
-- `POST /api/vendors` - Crear vendedor
-- `POST /api/vendors/:id/location` - Actualizar ubicación
-- `PATCH /api/vendors/:id/location/toggle` - Activar/desactivar visibilidad
-
-### Productos
-- `GET /api/products/vendor/:id` - Productos del vendedor
-- `POST /api/products` - Crear producto
-
-### Notificaciones
-- `GET /api/notifications/alerts` - Alertas del usuario
-- `POST /api/notifications/alerts` - Crear alerta
-- `POST /api/notifications/check` - Verificar vendedores cercanos
-
-## WebSocket Events 🔌
-
-- `join-location` - Unirse a sala de ubicación
-- `update-location` - Actualizar posición del vendedor
-- `toggle-visibility` - Cambiar visibilidad
-- `nearby-vendors` - Recibir vendedores cercanos
-- `vendor-location-updated` - Ubicación actualizada
-- `vendor-visibility-changed` - Visibilidad cambiada
-
-## Categorías Soportadas 📋
-
-- 🥬 Frutas y Verduras
-- 🥛 Lácteos
-- 🥖 Panadería
-- 🥩 Carnicería
-- 💊 Farmacia
-- 🛒 Abarrotes
-- 📦 Mensajería
-- 🔧 Ferretería
-- 📝 Papelería
-- 🧽 Productos de limpieza
-
-## Licencia 📄
-
-MIT
-
----
-
-## 🚀 Deploy en Producción
-
-Para desplegar CercaYa en Railway + Vercel, sigue la [Guía de Deploy](./DEPLOY.md).
-
-### Variables de Entorno Requeridas
-
-**Backend (Railway):**
-```bash
-NODE_ENV=production
-DATABASE_URL=postgresql://...
-JWT_SECRET=tu_secreto_seguro
-CORS_ORIGIN=https://cercaya.vercel.app
-```
-
-**Frontend (Vercel):**
-```bash
-VITE_API_URL=https://cercaya-backend-production.up.railway.app/api
-```
-
----
-
-Hecho con ❤️ para conectar comunidades locales
+Este proyecto está bajo la Licencia MIT.

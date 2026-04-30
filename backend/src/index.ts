@@ -21,6 +21,16 @@ import incidentRoutes from './routes/incidents';
 
 dotenv.config();
 
+// Validación de seguridad crítica
+if (!process.env.JWT_SECRET) {
+  console.error('❌ ERROR FATAL: JWT_SECRET no está configurado en el entorno.');
+  process.exit(1);
+}
+
+if (process.env.JWT_SECRET.length < 32) {
+  console.warn('⚠️ ADVERTENCIA: JWT_SECRET es muy corto. Se recomiendan al menos 32 caracteres.');
+}
+
 const app: Application = express();
 const httpServer = createServer(app);
 

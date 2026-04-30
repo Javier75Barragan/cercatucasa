@@ -11,7 +11,13 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  // En producción esto ya se valida en index.ts, pero por seguridad de tipos
+  // y para evitar comportamientos inesperados, lanzamos error aquí también.
+  throw new Error('JWT_SECRET must be defined in environment variables');
+}
 
 export const generateToken = (payload: Omit<JWTPayload, 'iat' | 'exp'>): string => {
   return jwt.sign(payload as any, JWT_SECRET, {

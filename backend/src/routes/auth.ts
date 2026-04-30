@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
+import rateLimit from 'express-rate-limit';
 import { query } from '../config/database';
 import { generateToken, authenticate } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -7,9 +8,22 @@ import { User, ApiResponse } from '../types';
 
 const router = Router();
 
+// Configuración de rate limiting para autenticación
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // 10 intentos por ventana (un poco más permisivo para desarrollo)
+  message: { 
+    success: false, 
+    error: 'Demasiados intentos desde esta IP, por favor intente después de 15 minutos' 
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Registro de usuario
 router.post(
   '/register',
+  authLimiter,
   asyncHandler(async (req, res) => {
     try {
       const { email, password, name, phone, role = 'customer' } = req.body;
@@ -104,6 +118,7 @@ router.post(
 // Login
 router.post(
   '/login',
+  authLimiter,
   asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
@@ -272,25 +287,5 @@ router.put(
   })
 );
 
-// RUTA TEMPORAL DE LIMPIEZA - SE ELIMINARÁ DESPUÉS DE USAR
-router.post(
-  '/admin/cleanup-database-2026',
-  asyncHandler(async (_req, res) => {
-    console.log('🧹 Limpieza de producción iniciada...');
-    await query(`
-      TRUNCATE TABLE 
-        incidents, 
-        contact_requests, 
-        reviews, 
-        notification_alerts, 
-        products, 
-        vendor_locations, 
-        vendors, 
-        users 
-      CASCADE;
-    `);
-    res.json({ success: true, message: 'Base de datos de producción limpia' });
-  })
-);
 
 export default router;
