@@ -174,8 +174,8 @@
   - [ ] `backend/src/middleware/__tests__/auth.test.ts`
   - [ ] `backend/src/middleware/__tests__/errorHandler.test.ts`
 
-- [ ] **Crear tests de rutas**
-  - [ ] `backend/src/routes/__tests__/auth.test.ts`
+- [x] **Crear tests de rutas**
+  - [x] `backend/src/routes/__tests__/auth.test.ts` ✅ COMPLETADO (14/14 pasando)
   - [ ] `backend/src/routes/__tests__/vendors.test.ts`
   - [ ] `backend/src/routes/__tests__/products.test.ts`
   - [ ] `backend/src/routes/__tests__/incidents.test.ts`

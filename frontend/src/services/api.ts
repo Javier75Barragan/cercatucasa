@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
-import { ApiResponse } from '../types';
+import { ApiResponse, Vendor, Product, NotificationAlert } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -11,21 +11,18 @@ const api: AxiosInstance = axios.create({
   timeout: 10000,
 });
 
-// Request interceptor para agregar token
+// Request interceptor — lee el token exclusivamente desde el estado persistido de Zustand
 api.interceptors.request.use(
   (config) => {
-    let token = localStorage.getItem('token');
-    
-    // Fallback: intentar leer del estado persistido de Zustand si no está el token directo
-    if (!token) {
-      const authData = localStorage.getItem('cercaya-auth');
-      if (authData) {
-        try {
-          const parsed = JSON.parse(authData);
-          token = parsed.state?.token;
-        } catch (e) {
-          console.error('Error parsing auth data for token fallback', e);
-        }
+    let token: string | null = null;
+
+    const authData = localStorage.getItem('cercaya-auth');
+    if (authData) {
+      try {
+        const parsed = JSON.parse(authData);
+        token = parsed.state?.token ?? null;
+      } catch {
+        // Estado corrupto: se ignora
       }
     }
 
@@ -150,5 +147,3 @@ export const incidentsApi = {
 };
 
 export default api;
-
-import { Vendor, Product, NotificationAlert } from '../types';
