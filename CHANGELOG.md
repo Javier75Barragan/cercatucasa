@@ -2,6 +2,21 @@
 
 Todas las modificaciones notables realizadas a este proyecto serán documentadas en este archivo.
 
+## [07/05/2026] - Correcciones Auditoría Técnica P1 — Build & Seguridad
+
+### 🐛 Bug Fix Crítico
+- **Corregido:** Error de compilación TypeScript en `backend/src/config/database.ts` (error TS2344). Se reemplazó el constraint genérico incorrecto `T extends QueryResultRow` por `T extends Record<string, any>` y se eliminaron los `@ts-ignore`. El backend ahora compila limpiamente con `tsc --noEmit` sin errores.
+
+### 🔒 Seguridad
+- **Eliminado:** `console.log` que imprimía email, nombre y teléfono del usuario en texto plano durante el registro (`auth.ts`). Violación de privacidad GDPR/LOPD.
+- **Corregido:** Error 500 ya no expone el `error.message` interno de Node.js/PostgreSQL al cliente. Ahora responde con un mensaje genérico.
+- **Corregido:** Endpoint `PATCH /api/vendors/:id/location/toggle` ahora verifica que el vendedor pertenece al usuario autenticado antes de permitir el toggle. Antes, cualquier `seller` podía desactivar la ubicación de otro vendedor.
+
+### 🗃️ Base de Datos
+- **Añadido:** Migración `1746660000000_unique-review-per-user.js` que aplica un constraint `UNIQUE (vendor_id, user_id)` en la tabla `reviews`, impidiendo que un usuario califique más de una vez al mismo vendedor (anti-spam).
+
+---
+
 ## [07/05/2026] - Finalización de Remediación de Seguridad (Auditoría Cierre)
 
 Durante esta sesión, se completaron los puntos críticos pendientes de la auditoría de seguridad, logrando una calificación final de 9.2/10.

@@ -32,14 +32,12 @@ pool.on('error', (err) => {
 });
 
 // Función helper para queries
-// @ts-ignore - Bypassing strict type check for QueryResultRow
-export const query = async <T extends QueryResultRow = any>(
+export const query = async <T extends Record<string, any> = any>(
   text: string,
   params?: any[]
 ): Promise<QueryResult<T>> => {
   const client = await pool.connect();
   try {
-    // @ts-ignore
     const result = await client.query<T>(text, params);
     return result;
   } finally {

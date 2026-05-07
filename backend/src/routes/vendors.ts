@@ -413,6 +413,22 @@ router.patch(
     const { id } = req.params;
     const { is_active } = req.body;
 
+    // Verificar propiedad (solo el dueño o admin puede modificar)
+    if (req.user!.role !== 'admin') {
+      const ownerResult = await query(
+        `SELECT user_id FROM vendors WHERE id = $1`,
+        [id]
+      );
+      if (ownerResult.rows.length === 0 || ownerResult.rows[0].user_id !== req.user!.userId) {
+        const response: ApiResponse<null> = {
+          success: false,
+          error: 'No tienes permisos para modificar este vendedor',
+        };
+        res.status(403).json(response);
+        return;
+      }
+    }
+
     await query(
       `UPDATE vendor_locations SET is_active = $1 WHERE vendor_id = $2`,
       [is_active, id]

@@ -31,8 +31,6 @@ router.post(
     try {
       const { email, password, name, phone, role = 'customer' } = req.body;
 
-      console.log('📥 Datos recibidos:', { email, name, phone, role });
-
       // Hash de contraseña
       const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -90,7 +88,7 @@ router.post(
 
       res.status(500).json({
         success: false,
-        error: error.message || 'Error interno del servidor',
+        error: 'Error interno del servidor',
       });
     }
   })
