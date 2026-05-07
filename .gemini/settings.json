@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "BeforeTool": [
+      {
+        "matcher": "read_file|list_directory",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"var r={decision:'allow'};if(require('fs').existsSync('.graphify/graph.json')){r.additionalContext='nodesify-graphify: Knowledge graph exists. Read .graphify/graph_report.md for god nodes and community structure before searching raw files.'}process.stdout.write(JSON.stringify(r))\""
+          }
+        ]
+      }
+    ]
+  }
+}
