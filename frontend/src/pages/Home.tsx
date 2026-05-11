@@ -157,10 +157,13 @@ const Home = () => {
                 No encontramos nada en este momento. Prueba expandiendo tu radio de búsqueda o cambiando de categoría.
               </p>
               <button 
-                onClick={() => {}} // This should trigger filters expand
+                onClick={() => {
+                  setFilters({ radius: filters.radius + 500 });
+                  window.dispatchEvent(new CustomEvent('toggle-filters'));
+                }} 
                 className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-medium transition-all"
               >
-                Ajustar filtros
+                Ajustar filtros (+500m)
               </button>
             </div>
           )}

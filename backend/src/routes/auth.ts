@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import rateLimit from 'express-rate-limit';
 import { query } from '../config/database';
-import { generateToken, generateRefreshToken, authenticate, verifyToken } from '../middleware/auth';
+import { generateToken, generateRefreshToken, authenticate, verifyToken, verifyRefreshToken } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { validate } from '../middleware/validate';
 import { registerSchema, loginSchema, updateProfileSchema, updatePasswordSchema, refreshTokenSchema } from '../schemas/auth';
@@ -13,15 +13,63 @@ const router = Router();
 // Configuración de rate limiting para autenticación
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 10, // 10 intentos por ventana (un poco más permisivo para desarrollo)
+  max: 10,
   message: { 
     success: false, 
     error: 'Demasiados intentos desde esta IP, por favor intente después de 15 minutos' 
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // En entorno de test desactivar el limiter para no interferir con los tests
+  skip: () => process.env.NODE_ENV === 'test',
 });
 
+/**
+ * @openapi
+ * /api/auth/register:
+ *   post:
+ *     tags:
+ *       - Autenticación
+ *     summary: Registrar un nuevo usuario
+ *     description: Crea un nuevo usuario en el sistema y devuelve los tokens de acceso.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - name
+ *               - phone
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: usuario@ejemplo.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: SecurePass123!
+ *               name:
+ *                 type: string
+ *                 example: Juan Pérez
+ *               phone:
+ *                 type: string
+ *                 example: "+573001234567"
+ *               role:
+ *                 type: string
+ *                 enum: [customer, vendor]
+ *                 default: customer
+ *     responses:
+ *       21:
+ *         description: Usuario creado exitosamente
+ *       409:
+ *         description: El email ya está registrado
+ *       400:
+ *         description: Datos de entrada inválidos
+ */
 // Registro de usuario
 router.post(
   '/register',
@@ -66,7 +114,9 @@ router.post(
 
       res.status(201).json(response);
     } catch (error: any) {
-      console.error('❌ Error en registro:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Error en registro:', error.code || error.message);
+      }
 
       // Error de email duplicado
       if (error.code === '23505') {
@@ -94,6 +144,36 @@ router.post(
   })
 );
 
+/**
+ * @openapi
+ * /api/auth/login:
+ *   post:
+ *     tags:
+ *       - Autenticación
+ *     summary: Iniciar sesión
+ *     description: Autentica a un usuario y devuelve tokens de acceso (JWT).
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Login exitoso
+ *       401:
+ *         description: Credenciales inválidas o usuario desactivado
+ */
 // Login
 router.post(
   '/login',
@@ -168,6 +248,31 @@ router.post(
   })
 );
 
+/**
+ * @openapi
+ * /api/auth/refresh:
+ *   post:
+ *     tags:
+ *       - Autenticación
+ *     summary: Refrescar token de acceso
+ *     description: Utiliza un refresh token válido para obtener un nuevo par de tokens.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Tokens renovados
+ *       401:
+ *         description: Refresh token inválido o expirado
+ */
 // Refresh Token
 router.post(
   '/refresh',
@@ -192,7 +297,7 @@ router.post(
     }
 
     try {
-      const decoded = verifyToken(refreshToken);
+      const decoded = verifyRefreshToken(refreshToken);
       const payload = {
         userId: decoded.userId,
         email: decoded.email,
@@ -223,6 +328,22 @@ router.post(
   })
 );
 
+/**
+ * @openapi
+ * /api/auth/me:
+ *   get:
+ *     tags:
+ *       - Autenticación
+ *     summary: Obtener perfil del usuario actual
+ *     description: Devuelve la información del usuario autenticado mediante el token Bearer.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Datos del usuario
+ *       401:
+ *         description: No autorizado
+ */
 // Perfil del usuario autenticado
 router.get(
   '/me',
