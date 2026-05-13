@@ -40,6 +40,8 @@ process.env.JWT_EXPIRES_IN = '15m';
 process.env.JWT_REFRESH_EXPIRES_IN = '7d';
 
 // Importar las rutas después de configurar las variables
+import { generateToken } from '../middleware/auth';
+import { UserRole } from '../types';
 import authRoutes from '../routes/auth';
 import { errorHandler } from '../middleware/errorHandler';
 
@@ -62,7 +64,7 @@ const mockUser = {
   email: 'test@example.com',
   name: 'Test User',
   phone: '+573001234567',
-  role: 'customer',
+  role: 'customer' as UserRole,
   is_active: true,
   avatar_url: null,
   created_at: new Date().toISOString(),
@@ -252,7 +254,7 @@ describe('GET /api/auth/me', () => {
   it('debe devolver datos del usuario autenticado (200)', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [mockUser], rowCount: 1 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken({ userId: mockUser.id, email: mockUser.email, role: mockUser.role });
     const res = await request(app)
       .get('/api/auth/me')
       .set('Authorization', `Bearer ${token}`);
@@ -274,7 +276,7 @@ describe('GET /api/auth/me', () => {
   it('debe devolver 404 si el usuario no existe', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken({ userId: mockUser.id, email: mockUser.email, role: mockUser.role });
     const res = await request(app)
       .get('/api/auth/me')
       .set('Authorization', `Bearer ${token}`);
@@ -293,7 +295,7 @@ describe('PUT /api/auth/me', () => {
     const updateData = { name: 'Nombre Actualizado', phone: '+573109876543' };
     mockQuery.mockResolvedValueOnce({ rows: [{ ...mockUser, ...updateData }], rowCount: 1 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken({ userId: mockUser.id, email: mockUser.email, role: mockUser.role });
     const res = await request(app)
       .put('/api/auth/me')
       .set('Authorization', `Bearer ${token}`)
@@ -317,7 +319,7 @@ describe('PUT /api/auth/me', () => {
   it('debe permitir actualización parcial (solo nombre)', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ ...mockUser, name: 'Solo Nombre' }], rowCount: 1 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken({ userId: mockUser.id, email: mockUser.email, role: mockUser.role });
     const res = await request(app)
       .put('/api/auth/me')
       .set('Authorization', `Bearer ${token}`)
@@ -338,7 +340,7 @@ describe('PUT /api/auth/password', () => {
     (mockBcryptCompare as jest.Mock).mockResolvedValueOnce(true);
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken({ userId: mockUser.id, email: mockUser.email, role: mockUser.role });
     const res = await request(app)
       .put('/api/auth/password')
       .set('Authorization', `Bearer ${token}`)
@@ -362,7 +364,7 @@ describe('PUT /api/auth/password', () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ password: '$2b$10$hashedpassword' }], rowCount: 1 } as any);
     (mockBcryptCompare as jest.Mock).mockResolvedValueOnce(false);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken({ userId: mockUser.id, email: mockUser.email, role: mockUser.role });
     const res = await request(app)
       .put('/api/auth/password')
       .set('Authorization', `Bearer ${token}`)
@@ -374,7 +376,7 @@ describe('PUT /api/auth/password', () => {
   });
 
   it('debe devolver 400 si contraseña nueva es muy corta', async () => {
-    const token = 'valid.jwt.token';
+    const token = generateToken({ userId: mockUser.id, email: mockUser.email, role: mockUser.role });
     const res = await request(app)
       .put('/api/auth/password')
       .set('Authorization', `Bearer ${token}`)

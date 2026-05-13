@@ -60,6 +60,9 @@ const enterpriseCategories = new Set([
 
 const VendorCard = ({ vendor }: VendorCardProps) => {
   const { setSelectedVendor } = useVendorsStore();
+  
+  if (!vendor) return null;
+  
   const isEnterprise = enterpriseCategories.has(vendor.category);
 
   return (

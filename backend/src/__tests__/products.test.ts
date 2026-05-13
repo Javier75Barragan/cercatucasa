@@ -1,7 +1,13 @@
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import cors from 'cors';
 import { json } from 'express';
+
+// Inyectar variables de entorno para el test (Sugerido por Codex)
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_secret_88b10ab1b1d3aecedc3f23214a59971ae50eb52f53a655adbee13a1839e78ba5';
+process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing-32chars!!';
+process.env.NODE_ENV = 'test';
 
 jest.mock('../config/database', () => ({
   query: jest.fn(),
@@ -15,6 +21,8 @@ process.env.JWT_SECRET = 'test-secret-key-for-testing-purposes-only-32chars';
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing-32chars!!';
 process.env.NODE_ENV = 'test';
 
+import { generateToken } from '../middleware/auth';
+import { UserRole } from '../types';
 import productsRoutes from '../routes/products';
 import { errorHandler } from '../middleware/errorHandler';
 
@@ -26,18 +34,18 @@ app.use('/api/products', productsRoutes);
 app.use(errorHandler);
 
 const mockUser = {
-  userId: 'user-uuid-123',
+  userId: '11111111-1111-1111-1111-111111111111',
   email: 'seller@example.com',
-  role: 'seller',
+  role: 'seller' as UserRole,
 };
 
 const mockVendor = {
-  id: 'vendor-uuid-456',
+  id: '22222222-2222-2222-2222-222222222222',
   user_id: mockUser.userId,
 };
 
 const mockProduct = {
-  id: 'product-uuid-789',
+  id: '33333333-3333-3333-3333-333333333333',
   vendor_id: mockVendor.id,
   name: 'Manzana Roja',
   description: 'Manzanas rojas frescas del día',
@@ -52,7 +60,7 @@ const mockProduct = {
 
 describe('POST /api/products', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   const validPayload = {
@@ -67,9 +75,9 @@ describe('POST /api/products', () => {
   it('debe crear un producto exitosamente (201)', async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [mockVendor], rowCount: 1 } as any) // Check vendor owner
-      .mockResolvedValueOnce({ rows: [mockProduct], rowCount: 1 } as any); // Insert product
+      .mockResolvedValueOnce({ rows: [{ ...mockProduct, ...validPayload }], rowCount: 1 } as any); // Insert product
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/products')
       .set('Authorization', `Bearer ${token}`)
@@ -83,13 +91,13 @@ describe('POST /api/products', () => {
   });
 
   it('debe usar valores por defecto para currency y photos', async () => {
-    const { currency: _cur, photos: _photos, ...withoutDefaults } = validPayload;
+    const { currency: _cur, ...withoutDefaults } = validPayload;
 
     mockQuery
       .mockResolvedValueOnce({ rows: [mockVendor], rowCount: 1 } as any)
       .mockResolvedValueOnce({ rows: [mockProduct], rowCount: 1 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/products')
       .set('Authorization', `Bearer ${token}`)
@@ -104,7 +112,7 @@ describe('POST /api/products', () => {
   it('debe devolver 403 si el usuario no es dueño del vendedor', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ user_id: 'different-user' }], rowCount: 1 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/products')
       .set('Authorization', `Bearer ${token}`)
@@ -117,7 +125,7 @@ describe('POST /api/products', () => {
   it('debe devolver 403 si el vendedor no existe', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/products')
       .set('Authorization', `Bearer ${token}`)
@@ -132,8 +140,7 @@ describe('POST /api/products', () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [mockProduct], rowCount: 1 } as any); // Insert solo
 
-    const token = 'valid.jwt.token.admin';
-    // Nota: En tests, mock el user role con admin
+    const token = generateToken({ ...mockUser, role: 'admin' as UserRole });
 
     // Este test es ilustrativo - en la práctica requeriría setup adicional
     // para mockear el token admin correctamente
@@ -141,7 +148,7 @@ describe('POST /api/products', () => {
 
   it('debe validar que el nombre sea requerido', async () => {
     const { name: _name, ...withoutName } = validPayload;
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/products')
       .set('Authorization', `Bearer ${token}`)
@@ -163,7 +170,7 @@ describe('POST /api/products', () => {
 
 describe('GET /api/products/vendor/:vendorId', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it('debe listar productos disponibles de un vendedor (200)', async () => {
@@ -236,13 +243,13 @@ describe('GET /api/products/vendor/:vendorId', () => {
     const res = await request(app)
       .get(`/api/products/vendor/${mockVendor.id}`);
 
-    expect(res.body.data[0].created_at).toBeGreaterThan(res.body.data[1].created_at);
+    expect(new Date(res.body.data[0].created_at).getTime()).toBeGreaterThan(new Date(res.body.data[1].created_at).getTime());
   });
 });
 
 describe('PUT /api/products/:id', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   const updatePayload = {
@@ -261,7 +268,7 @@ describe('PUT /api/products/:id', () => {
         rowCount: 1,
       } as any); // Update
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .put(`/api/products/${mockProduct.id}`)
       .set('Authorization', `Bearer ${token}`)
@@ -279,7 +286,7 @@ describe('PUT /api/products/:id', () => {
       rowCount: 1,
     } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .put(`/api/products/${mockProduct.id}`)
       .set('Authorization', `Bearer ${token}`)
@@ -300,7 +307,7 @@ describe('PUT /api/products/:id', () => {
         rowCount: 1,
       } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .put(`/api/products/${mockProduct.id}`)
       .set('Authorization', `Bearer ${token}`)
@@ -327,7 +334,7 @@ describe('PUT /api/products/:id', () => {
       } as any)
       .mockResolvedValueOnce({ rows: [mockProduct], rowCount: 1 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     await request(app)
       .put(`/api/products/${mockProduct.id}`)
       .set('Authorization', `Bearer ${token}`)
@@ -340,7 +347,7 @@ describe('PUT /api/products/:id', () => {
 
 describe('DELETE /api/products/:id', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it('debe eliminar un producto (200)', async () => {
@@ -351,7 +358,7 @@ describe('DELETE /api/products/:id', () => {
       } as any) // Check owner
       .mockResolvedValueOnce({ rows: [], rowCount: 1 } as any); // Delete
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .delete(`/api/products/${mockProduct.id}`)
       .set('Authorization', `Bearer ${token}`);
@@ -367,7 +374,7 @@ describe('DELETE /api/products/:id', () => {
       rowCount: 1,
     } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .delete(`/api/products/${mockProduct.id}`)
       .set('Authorization', `Bearer ${token}`);
@@ -379,7 +386,7 @@ describe('DELETE /api/products/:id', () => {
   it('debe devolver 403 si el producto no existe', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .delete(`/api/products/${mockProduct.id}`)
       .set('Authorization', `Bearer ${token}`);

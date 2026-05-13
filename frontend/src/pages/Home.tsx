@@ -55,7 +55,11 @@ const Home = () => {
         type: filters.type,
       });
       
-      const newVendors: Vendor[] = response.data.data || [];
+      const newVendors: Vendor[] = (response.data.data || []).map((v: any) => ({
+        ...v,
+        photos: v.photos || [],
+        subcategories: v.subcategories || [],
+      }));
       
       // Check for new vendors to play sound
       const currentIds = new Set(newVendors.map(v => v.id));
@@ -69,7 +73,7 @@ const Home = () => {
       setEncounters(prev => {
         const newEncounters = [...prev];
         newVendors.forEach(v => {
-          const idx = newEncounters.findIndex(e => e.vendor.id === v.id);
+          const idx = newEncounters.findIndex(e => e.vendor?.id === v.id);
           if (idx >= 0) {
             newEncounters[idx] = { vendor: v, lastSeen: new Date() };
           } else {
@@ -79,7 +83,7 @@ const Home = () => {
         // Keep only last 20 and filter older than 2 hours
         const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
         return newEncounters
-          .filter(e => e.lastSeen > twoHoursAgo)
+          .filter(e => e.vendor && e.lastSeen > twoHoursAgo)
           .slice(0, 20);
       });
       
@@ -143,7 +147,7 @@ const Home = () => {
             </div>
           ) : vendors.length > 0 ? (
             <div className="space-y-3 animate-fade-in">
-              {vendors.map((vendor) => (
+              {vendors.filter(v => v && v.id).map((vendor) => (
                 <VendorCard key={vendor.id} vendor={vendor} />
               ))}
             </div>

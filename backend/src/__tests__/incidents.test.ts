@@ -24,6 +24,8 @@ process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing-32chars!!'
 process.env.JWT_EXPIRES_IN = '15m';
 process.env.NODE_ENV = 'test';
 
+import { generateToken } from '../middleware/auth';
+import { UserRole } from '../types';
 import incidentsRoutes from '../routes/incidents';
 import { errorHandler } from '../middleware/errorHandler';
 
@@ -37,7 +39,7 @@ app.use(errorHandler);
 const mockUser = {
   userId: 'user-uuid-123',
   email: 'user@example.com',
-  role: 'customer',
+  role: 'customer' as UserRole,
 };
 
 const mockIncident = {
@@ -113,7 +115,7 @@ describe('POST /api/incidents', () => {
       .mockResolvedValueOnce({ rows: [mockIncident], rowCount: 1 } as any)
       .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/incidents')
       .set('Authorization', `Bearer ${token}`)
@@ -172,7 +174,7 @@ describe('GET /api/incidents/nearby', () => {
       rowCount: 1,
     } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .get('/api/incidents/nearby')
       .set('Authorization', `Bearer ${token}`)
@@ -185,7 +187,7 @@ describe('GET /api/incidents/nearby', () => {
   });
 
   it('debe devolver 400 si falta lat o lng', async () => {
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .get('/api/incidents/nearby')
       .set('Authorization', `Bearer ${token}`)
@@ -207,7 +209,7 @@ describe('GET /api/incidents/nearby', () => {
   it('debe filtrar por tipo de incidente', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     await request(app)
       .get('/api/incidents/nearby')
       .set('Authorization', `Bearer ${token}`)
@@ -220,7 +222,7 @@ describe('GET /api/incidents/nearby', () => {
   it('debe filtrar por estado si se proporciona', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     await request(app)
       .get('/api/incidents/nearby')
       .set('Authorization', `Bearer ${token}`)
@@ -233,7 +235,7 @@ describe('GET /api/incidents/nearby', () => {
   it('debe devolver solo incidentes pending o in_progress por defecto', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     await request(app)
       .get('/api/incidents/nearby')
       .set('Authorization', `Bearer ${token}`)
@@ -255,7 +257,7 @@ describe('PATCH /api/incidents/:id/status', () => {
       rowCount: 1,
     } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .patch(`/api/incidents/${mockIncident.id}/status`)
       .set('Authorization', `Bearer ${token}`)
@@ -278,7 +280,7 @@ describe('PATCH /api/incidents/:id/status', () => {
       rowCount: 1,
     } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .patch(`/api/incidents/${mockIncident.id}/status`)
       .set('Authorization', `Bearer ${token}`)
@@ -292,7 +294,7 @@ describe('PATCH /api/incidents/:id/status', () => {
   it('debe devolver 404 si el incidente no existe', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .patch('/api/incidents/nonexistent-id/status')
       .set('Authorization', `Bearer ${token}`)
@@ -317,7 +319,7 @@ describe('PATCH /api/incidents/:id/status', () => {
       rowCount: 1,
     } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .patch(`/api/incidents/${mockIncident.id}/status`)
       .set('Authorization', `Bearer ${token}`)
@@ -339,7 +341,7 @@ describe('GET /api/incidents/my-reports', () => {
       rowCount: 2,
     } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .get('/api/incidents/my-reports')
       .set('Authorization', `Bearer ${token}`);
@@ -353,7 +355,7 @@ describe('GET /api/incidents/my-reports', () => {
   it('debe devolver vacío si el usuario no tiene reportes', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .get('/api/incidents/my-reports')
       .set('Authorization', `Bearer ${token}`);
@@ -375,12 +377,12 @@ describe('GET /api/incidents/my-reports', () => {
 
     mockQuery.mockResolvedValueOnce({ rows: [newer, older], rowCount: 2 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .get('/api/incidents/my-reports')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.data[0].created_at).toBeGreaterThan(res.body.data[1].created_at);
+    expect(new Date(res.body.data[0].created_at).getTime()).toBeGreaterThan(new Date(res.body.data[1].created_at).getTime());
   });
 });

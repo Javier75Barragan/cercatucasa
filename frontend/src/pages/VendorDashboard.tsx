@@ -6,6 +6,7 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { useSocket } from '../hooks/useSocket';
 import { vendorsApi } from '../services/api';
 import { Vendor, Category, Incident } from '../types';
+import ImageUploader from '../components/ImageUploader';
 
 const DAYS = [
   { key: 'monday', label: 'Lunes' },
@@ -54,6 +55,8 @@ const VendorDashboard = () => {
     email: '',
     website: '',
     address: '',
+    avatar_url: '',
+    photos: [] as string[],
     subcategories: [] as string[],
     schedule: {
       monday: { open: '08:00', close: '18:00' },
@@ -272,6 +275,20 @@ const VendorDashboard = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-1.5 h-6 bg-primary-500 rounded-full"></div>
                     <h3 className="text-[11px] font-black text-white/30 uppercase tracking-[0.2em]">Identidad Visual</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-5 mb-4">
+                    <ImageUploader 
+                      label="Logo / Avatar" 
+                      onUploadSuccess={(url) => handleInputChange('avatar_url', url)}
+                    />
+                    <ImageUploader 
+                      label="Foto Portada" 
+                      onUploadSuccess={(url) => {
+                        setFormData(prev => ({ ...prev, photos: [url] }));
+                      }}
+                      aspectRatio="video"
+                    />
                   </div>
                   
                   <div className="space-y-1.5">

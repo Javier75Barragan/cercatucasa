@@ -15,6 +15,8 @@ process.env.JWT_SECRET = 'test-secret-key-for-testing-purposes-only-32chars';
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing-32chars!!';
 process.env.NODE_ENV = 'test';
 
+import { generateToken } from '../middleware/auth';
+import { UserRole } from '../types';
 import notificationsRoutes from '../routes/notifications';
 import { errorHandler } from '../middleware/errorHandler';
 
@@ -28,7 +30,7 @@ app.use(errorHandler);
 const mockUser = {
   userId: 'user-uuid-123',
   email: 'user@example.com',
-  role: 'customer',
+  role: 'customer' as UserRole,
 };
 
 const mockAlert = {
@@ -60,7 +62,7 @@ describe('POST /api/notifications/alerts', () => {
   it('debe crear una alerta de notificación (201)', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [mockAlert], rowCount: 1 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/notifications/alerts')
       .set('Authorization', `Bearer ${token}`)
@@ -76,7 +78,7 @@ describe('POST /api/notifications/alerts', () => {
   it('debe usar valores por defecto si no se proporcionan', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [mockAlert], rowCount: 1 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/notifications/alerts')
       .set('Authorization', `Bearer ${token}`)
@@ -90,7 +92,7 @@ describe('POST /api/notifications/alerts', () => {
 
   it('debe validar que la categoría sea requerida', async () => {
     const { category: _cat, ...withoutCategory } = validPayload;
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/notifications/alerts')
       .set('Authorization', `Bearer ${token}`)
@@ -121,7 +123,7 @@ describe('GET /api/notifications/alerts', () => {
       rowCount: 2,
     } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .get('/api/notifications/alerts')
       .set('Authorization', `Bearer ${token}`);
@@ -135,7 +137,7 @@ describe('GET /api/notifications/alerts', () => {
   it('debe devolver vacío si el usuario no tiene alertas', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .get('/api/notifications/alerts')
       .set('Authorization', `Bearer ${token}`);
@@ -157,12 +159,12 @@ describe('GET /api/notifications/alerts', () => {
 
     mockQuery.mockResolvedValueOnce({ rows: [newer, older], rowCount: 2 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .get('/api/notifications/alerts')
       .set('Authorization', `Bearer ${token}`);
 
-    expect(res.body.data[0].created_at).toBeGreaterThan(res.body.data[1].created_at);
+    expect(new Date(res.body.data[0].created_at).getTime()).toBeGreaterThan(new Date(res.body.data[1].created_at).getTime());
   });
 });
 
@@ -181,7 +183,7 @@ describe('PUT /api/notifications/alerts/:id', () => {
       .mockResolvedValueOnce({ rows: [{ user_id: mockUser.userId }], rowCount: 1 } as any) // Check owner
       .mockResolvedValueOnce({ rows: [{ ...mockAlert, ...updatePayload }], rowCount: 1 } as any); // Update
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .put(`/api/notifications/alerts/${mockAlert.id}`)
       .set('Authorization', `Bearer ${token}`)
@@ -195,7 +197,7 @@ describe('PUT /api/notifications/alerts/:id', () => {
   it('debe devolver 404 si la alerta no existe', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .put('/api/notifications/alerts/nonexistent-id')
       .set('Authorization', `Bearer ${token}`)
@@ -208,7 +210,7 @@ describe('PUT /api/notifications/alerts/:id', () => {
   it('debe devolver 403 si el usuario no es dueño', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ user_id: 'different-user' }], rowCount: 1 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .put(`/api/notifications/alerts/${mockAlert.id}`)
       .set('Authorization', `Bearer ${token}`)
@@ -228,7 +230,7 @@ describe('PUT /api/notifications/alerts/:id', () => {
       id: 'hack-attempt', // Campo no permitido
     };
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .put(`/api/notifications/alerts/${mockAlert.id}`)
       .set('Authorization', `Bearer ${token}`)
@@ -236,7 +238,7 @@ describe('PUT /api/notifications/alerts/:id', () => {
 
     expect(res.status).toBe(200);
     const queryCall = mockQuery.mock.calls[1];
-    expect(queryCall[0]).not.toContain('id = '); // No debería actualizar id
+    expect(queryCall[0]).not.toMatch(/SET[^W]*id\s*=/i); // No debería actualizar id
   });
 
   it('debe devolver 401 si no está autenticado', async () => {
@@ -259,7 +261,7 @@ describe('DELETE /api/notifications/alerts/:id', () => {
       .mockResolvedValueOnce({ rows: [{ user_id: mockUser.userId }], rowCount: 1 } as any) // Check owner
       .mockResolvedValueOnce({ rows: [], rowCount: 1 } as any); // Delete
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .delete(`/api/notifications/alerts/${mockAlert.id}`)
       .set('Authorization', `Bearer ${token}`);
@@ -272,7 +274,7 @@ describe('DELETE /api/notifications/alerts/:id', () => {
   it('debe devolver 404 si la alerta no existe', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .delete('/api/notifications/alerts/nonexistent-id')
       .set('Authorization', `Bearer ${token}`);
@@ -284,7 +286,7 @@ describe('DELETE /api/notifications/alerts/:id', () => {
   it('debe devolver 403 si el usuario no es dueño', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ user_id: 'different-user' }], rowCount: 1 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .delete(`/api/notifications/alerts/${mockAlert.id}`)
       .set('Authorization', `Bearer ${token}`);
@@ -323,7 +325,7 @@ describe('POST /api/notifications/check', () => {
 
     mockQuery.mockResolvedValueOnce({ rows: mockMatches, rowCount: 1 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/notifications/check')
       .set('Authorization', `Bearer ${token}`)
@@ -339,7 +341,7 @@ describe('POST /api/notifications/check', () => {
   it('debe devolver vacío si no hay coincidencias', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/notifications/check')
       .set('Authorization', `Bearer ${token}`)
@@ -351,7 +353,7 @@ describe('POST /api/notifications/check', () => {
 
   it('debe validar que latitude y longitude sean requeridas', async () => {
     const { latitude: _lat, ...withoutLatitude } = checkPayload;
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/notifications/check')
       .set('Authorization', `Bearer ${token}`)
@@ -373,7 +375,7 @@ describe('POST /api/notifications/check', () => {
   it('debe considerar el día y hora actuales en el filtro', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const token = 'valid.jwt.token';
+    const token = generateToken(mockUser);
     await request(app)
       .post('/api/notifications/check')
       .set('Authorization', `Bearer ${token}`)

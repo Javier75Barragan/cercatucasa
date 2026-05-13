@@ -1,0 +1,84 @@
+﻿
+> cercaya-backend@1.0.0 test
+> jest
+
+node.exe : PASS src/__tests__/app.test.ts
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (PASS src/__tests__/app.test.ts:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS src/__tests__/auth.test.ts
+FAIL src/__tests__/notifications.test.ts
+  ÔùÅ GET /api/notifications/alerts ÔÇ║ debe ordenar alertas por fecha m├ís reciente primero
+
+    expect(received).toBeGreaterThan(expected)
+
+    Matcher error: received value must be a number or bigint
+
+    Received has type:  string
+    Received has value: "2026-05-13T01:28:50.159Z"
+
+    [0m [90m 165 |[39m       [33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m`Bearer 
+${token}`[39m)[33m;[39m
+     [90m 166 |[39m
+    [31m[1m>[22m[39m[90m 167 |[39m     expect(res[33m.[39mbody[33m.[39mdata[[35m0[39m][33m.[39mcreated_at
+)[33m.[39mtoBeGreaterThan(res[33m.[39mbody[33m.[39mdata[[35m1[39m][33m.[39mcreated_at)[33m;[39m
+     [90m     |[39m                                         [31m[1m^[22m[39m
+     [90m 168 |[39m   })[33m;[39m
+     [90m 169 |[39m })[33m;[39m
+     [90m 170 |[39m[0m
+
+      at Object.<anonymous> (src/__tests__/notifications.test.ts:167:41)
+
+  ÔùÅ PUT /api/notifications/alerts/:id ÔÇ║ debe validar campos permitidos
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "id = "
+    Received string:        "UPDATE notification_alerts SET radius_meters = $1, schedule_start = $2 WHERE id = $3 
+RETURNING *"
+
+    [0m [90m 239 |[39m     expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m 240 |[39m     [36mconst[39m queryCall [33m=[39m 
+mockQuery[33m.[39mmock[33m.[39mcalls[[35m1[39m][33m;[39m
+    [31m[1m>[22m[39m[90m 241 |[39m     expect(queryCall[[35m0[39m])[33m.[39mnot[33m.[39mtoContain([32m'id 
+= '[39m)[33m;[39m [90m// No deber├¡a actualizar id[39m
+     [90m     |[39m                              [31m[1m^[22m[39m
+     [90m 242 |[39m   })[33m;[39m
+     [90m 243 |[39m
+     [90m 244 |[39m   it([32m'debe devolver 401 si no est├í autenticado'[39m[33m,[39m [36masync[39m () 
+[33m=>[39m {[0m
+
+      at Object.<anonymous> (src/__tests__/notifications.test.ts:241:30)
+
+FAIL src/__tests__/incidents.test.ts
+  ÔùÅ GET /api/incidents/my-reports ÔÇ║ debe ordenar reportes por fecha m├ís reciente primero
+
+    expect(received).toBeGreaterThan(expected)
+
+    Matcher error: received value must be a number or bigint
+
+    Received has type:  string
+    Received has value: "2026-05-13T01:28:50.445Z"
+
+    [0m [90m 384 |[39m
+     [90m 385 |[39m     expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 386 |[39m     expect(res[33m.[39mbody[33m.[39mdata[[35m0[39m][33m.[39mcreated_at
+)[33m.[39mtoBeGreaterThan(res[33m.[39mbody[33m.[39mdata[[35m1[39m][33m.[39mcreated_at)[33m;[39m
+     [90m     |[39m                                         [31m[1m^[22m[39m
+     [90m 387 |[39m   })[33m;[39m
+     [90m 388 |[39m })[33m;[39m
+     [90m 389 |[39m[0m
+
+      at Object.<anonymous> (src/__tests__/incidents.test.ts:386:41)
+
+PASS src/__tests__/vendors.test.ts
+PASS src/__tests__/products.test.ts
+
+Test Suites: 2 failed, 4 passed, 6 total
+Tests:       3 failed, 112 passed, 115 total
+Snapshots:   0 total
+Time:        4.974 s, estimated 5 s
+Ran all test suites.
