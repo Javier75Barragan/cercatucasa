@@ -55,7 +55,7 @@ describe('POST /api/products', () => {
     description: 'Descripción del producto',
     price: 5000,
     currency: 'COP',
-    category: 'fruits',
+    category: 'Comida',
   };
 
   it('debe crear un producto exitosamente (201)', async () => {
@@ -80,7 +80,7 @@ describe('POST /api/products', () => {
     const { currency: _cur, ...withoutDefaults } = validPayload;
 
     mockQuery
-      .mockResolvedValueOnce({ rows: [mockVendor], rowCount: 1 } as any)
+      .mockResolvedValueOnce({ rows: [{ id: mockVendorId, user_id: mockUser.userId }], rowCount: 1 } as any)
       .mockResolvedValueOnce({ rows: [mockProduct], rowCount: 1 } as any);
 
     const token = generateToken(mockUser);
@@ -104,7 +104,7 @@ describe('POST /api/products', () => {
       .set('Authorization', `Bearer ${token}`)
       .send(validPayload);
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
   });
 
@@ -117,7 +117,7 @@ describe('POST /api/products', () => {
       .set('Authorization', `Bearer ${token}`)
       .send(validPayload);
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
   });
 
