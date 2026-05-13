@@ -9,13 +9,13 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_secret_88b10ab1b1d3aece
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing-32chars!!';
 process.env.NODE_ENV = 'test';
 
-jest.mock('../config/database', () => ({
-  query: jest.fn(),
+vi.mock('../config/database', () => ({
+  query: vi.fn(),
 }));
 
 import { query } from '../config/database';
 
-const mockQuery = query as jest.MockedFunction<typeof query>;
+const mockQuery = query as vi.MockedFunction<typeof query>;
 
 process.env.JWT_SECRET = 'test-secret-key-for-testing-purposes-only-32chars';
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing-32chars!!';
@@ -33,38 +33,24 @@ app.set('trust proxy', 1);
 app.use('/api/products', productsRoutes);
 app.use(errorHandler);
 
-const mockUser = {
-  userId: '11111111-1111-1111-1111-111111111111',
-  email: 'seller@example.com',
-  role: 'seller' as UserRole,
-};
-
-const mockVendor = {
-  id: '22222222-2222-2222-2222-222222222222',
-  user_id: mockUser.userId,
-};
-
+const mockUser = { userId: 'd3b3e3e3-e3e3-e3e3-e3e3-e3e3e3e3e3e3', email: 'test@example.com', role: 'seller' };
+const mockVendorId = 'v3b3e3e3-e3e3-e3e3-e3e3-e3e3e3e3e3e3';
 const mockProduct = {
-  id: '33333333-3333-3333-3333-333333333333',
-  vendor_id: mockVendor.id,
-  name: 'Manzana Roja',
-  description: 'Manzanas rojas frescas del día',
-  price: 2500,
-  currency: 'COP',
-  photos: ['https://example.com/manzana.jpg'],
-  category: 'fruits',
+  id: 'p3b3e3e3-e3e3-e3e3-e3e3-e3e3e3e3e3e3',
+  vendor_id: mockVendorId,
+  name: 'Producto de Prueba',
+  price: 1000,
   is_available: true,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
+  category: 'Comida',
 };
 
 describe('POST /api/products', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   const validPayload = {
-    vendor_id: mockVendor.id,
+    vendor_id: mockVendorId,
     name: 'Producto Nuevo',
     description: 'Descripción del producto',
     price: 5000,
@@ -74,14 +60,14 @@ describe('POST /api/products', () => {
 
   it('debe crear un producto exitosamente (201)', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [mockVendor], rowCount: 1 } as any) // Check vendor owner
+      .mockResolvedValueOnce({ rows: [{ id: mockVendorId, user_id: mockUser.userId }], rowCount: 1 } as any) // Check vendor owner
       .mockResolvedValueOnce({ rows: [{ ...mockProduct, ...validPayload }], rowCount: 1 } as any); // Insert product
 
     const token = generateToken(mockUser);
     const res = await request(app)
       .post('/api/products')
       .set('Authorization', `Bearer ${token}`)
-      .send(validPayload);
+      .send(mockProduct);
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
@@ -170,7 +156,7 @@ describe('POST /api/products', () => {
 
 describe('GET /api/products/vendor/:vendorId', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it('debe listar productos disponibles de un vendedor (200)', async () => {
@@ -180,7 +166,7 @@ describe('GET /api/products/vendor/:vendorId', () => {
     } as any);
 
     const res = await request(app)
-      .get(`/api/products/vendor/${mockVendor.id}`);
+      .get(`/api/products/vendor/${mockVendorId}`);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -191,7 +177,7 @@ describe('GET /api/products/vendor/:vendorId', () => {
   it('debe filtrar solo productos disponibles por defecto', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [mockProduct], rowCount: 1 } as any);
 
-    await request(app).get(`/api/products/vendor/${mockVendor.id}`);
+    await request(app).get(`/api/products/vendor/${mockVendorId}`);
 
     const queryCall = mockQuery.mock.calls[0];
     expect(queryCall[0]).toContain('is_available = true');
@@ -204,7 +190,7 @@ describe('GET /api/products/vendor/:vendorId', () => {
     } as any);
 
     const res = await request(app)
-      .get(`/api/products/vendor/${mockVendor.id}`)
+      .get(`/api/products/vendor/${mockVendorId}`)
       .query({ available_only: 'false' });
 
     expect(res.status).toBe(200);
@@ -218,7 +204,7 @@ describe('GET /api/products/vendor/:vendorId', () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
     const res = await request(app)
-      .get(`/api/products/vendor/${mockVendor.id}`);
+      .get(`/api/products/vendor/${mockVendorId}`);
 
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual([]);
@@ -228,7 +214,7 @@ describe('GET /api/products/vendor/:vendorId', () => {
     mockQuery.mockResolvedValueOnce({ rows: [mockProduct], rowCount: 1 } as any);
 
     const res = await request(app)
-      .get(`/api/products/vendor/${mockVendor.id}`);
+      .get(`/api/products/vendor/${mockVendorId}`);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -241,7 +227,7 @@ describe('GET /api/products/vendor/:vendorId', () => {
     mockQuery.mockResolvedValueOnce({ rows: [newer, older], rowCount: 2 } as any);
 
     const res = await request(app)
-      .get(`/api/products/vendor/${mockVendor.id}`);
+      .get(`/api/products/vendor/${mockVendorId}`);
 
     expect(new Date(res.body.data[0].created_at).getTime()).toBeGreaterThan(new Date(res.body.data[1].created_at).getTime());
   });
@@ -249,7 +235,7 @@ describe('GET /api/products/vendor/:vendorId', () => {
 
 describe('PUT /api/products/:id', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   const updatePayload = {
@@ -347,7 +333,7 @@ describe('PUT /api/products/:id', () => {
 
 describe('DELETE /api/products/:id', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it('debe eliminar un producto (200)', async () => {
