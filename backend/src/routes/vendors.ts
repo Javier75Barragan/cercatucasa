@@ -379,16 +379,16 @@ router.post(
       }
     }
 
-    // Desactivar ubicaciones anteriores
-    await query(
-      `UPDATE vendor_locations SET is_active = false WHERE vendor_id = $1`,
-      [id]
-    );
-
-    // Insertar nueva ubicación
+    // UPSERT: actualizar si ya existe, crear si no
     const result = await query<VendorLocation>(
       `INSERT INTO vendor_locations (vendor_id, latitude, longitude, accuracy, is_active)
        VALUES ($1, $2, $3, $4, true)
+       ON CONFLICT (vendor_id) WHERE is_active = true
+       DO UPDATE SET 
+         latitude = EXCLUDED.latitude,
+         longitude = EXCLUDED.longitude,
+         accuracy = EXCLUDED.accuracy,
+         updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
       [id, latitude, longitude, accuracy]
     );
@@ -453,16 +453,21 @@ router.post(
     const { rating, comment } = req.body;
     const userId = req.user!.userId;
 
-    // Insertar reseña
+    // Insertar o actualizar reseña (UPSERT)
     await query(
       `INSERT INTO reviews (vendor_id, user_id, rating, comment)
-       VALUES ($1, $2, $3, $4)`,
-      [id, userId, rating, comment]
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (vendor_id, user_id) 
+       DO UPDATE SET 
+        rating = EXCLUDED.rating,
+        comment = EXCLUDED.comment,
+        created_at = CURRENT_TIMESTAMP`,
+      [id, userId, rating, comment || null]
     );
 
     // Actualizar promedio y conteo en la tabla vendors
     const statsResult = await query(
-      `SELECT AVG(rating)::DECIMAL(2,1) as avg_rating, COUNT(*) as count
+      `SELECT COALESCE(AVG(rating), 0)::DECIMAL(2,1) as avg_rating, COUNT(*) as count
        FROM reviews
        WHERE vendor_id = $1`,
       [id]

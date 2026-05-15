@@ -65,8 +65,9 @@ const VendorDetails = () => {
         setRatingSuccess(true);
         // Opcional: refrescar el vendor en el store para ver el nuevo promedio
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al calificar:', error);
+      alert(error.response?.data?.error || 'Error al calificar el negocio');
     } finally {
       setIsRating(false);
     }

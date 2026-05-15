@@ -189,7 +189,7 @@ const Home = () => {
 
       {/* Main Content Area (Map) */}
       <div className="flex-1 relative overflow-hidden">
-        {error ? (
+        {error && !location ? (
           <div className="absolute inset-0 flex items-center justify-center bg-dark-950 z-50 p-6 animate-fade-in text-center">
             <div className="max-w-xs card-glass p-8 border-red-500/20">
               <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 ring-1 ring-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.1)]">

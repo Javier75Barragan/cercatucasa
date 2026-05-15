@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import { ApiResponse, Vendor, Product, NotificationAlert } from '../types';
+import { useAuthStore } from '../stores/authStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -11,20 +12,10 @@ const api: AxiosInstance = axios.create({
   timeout: 10000,
 });
 
-// Request interceptor — lee el token exclusivamente desde el estado persistido de Zustand
+// Request interceptor — Lee el token directamente del estado de memoria de Zustand
 api.interceptors.request.use(
   (config) => {
-    let token: string | null = null;
-
-    const authData = localStorage.getItem('cercaya-auth');
-    if (authData) {
-      try {
-        const parsed = JSON.parse(authData);
-        token = parsed.state?.token ?? null;
-      } catch {
-        // Estado corrupto: se ignora
-      }
-    }
+    const token = useAuthStore.getState().token;
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -34,13 +25,17 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Flag para evitar múltiples redirects simultáneos al recibir 401
+let isRedirectingToLogin = false;
+
 // Response interceptor para manejar errores
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiResponse<unknown>>) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+    if (error.response?.status === 401 && !isRedirectingToLogin) {
+      isRedirectingToLogin = true;
+      // Limpiar sesión usando el store directamente
+      useAuthStore.getState().logout();
       window.location.href = '/login';
     }
     return Promise.reject(error);

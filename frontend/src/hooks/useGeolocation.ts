@@ -29,11 +29,17 @@ export const useGeolocation = (options?: PositionOptions) => {
   }, []);
 
   const handleError = useCallback((error: GeolocationPositionError) => {
-    setState((prev) => ({
-      ...prev,
-      error: error.message,
-      isLoading: false,
-    }));
+    setState((prev) => {
+      // En desarrollo, si ya tenemos ubicación (probablemente el fallback), ignoramos el error
+      if (import.meta.env.DEV && prev.location) {
+        return prev;
+      }
+      return {
+        ...prev,
+        error: error.message,
+        isLoading: false,
+      };
+    });
   }, []);
 
   const startWatching = useCallback(() => {

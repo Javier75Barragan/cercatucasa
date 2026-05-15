@@ -25,6 +25,9 @@ Esta carpeta contiene los documentos de auditoria tecnica, seguridad, remediacio
 7. `INFORME_FINAL_AUDITORIA.md` y `RESUMEN_CAMBIOS_2026-04-30.md`  
    Documentos de cierre/cambios historicos.
 
+8. `auditoria_estabilidad_2026-05-14.md`  
+   Auditoría de estabilidad y rendimiento: 8 bugs corregidos, índices de BD, logging detallado, UPSERT atómico.
+
 ## Estado de los documentos
 
 | Documento | Tipo | Estado |
@@ -36,8 +39,9 @@ Esta carpeta contiene los documentos de auditoria tecnica, seguridad, remediacio
 | `security_findings.md` | Seguridad | Historico/confidencial |
 | `informe_auditoria.md` | Auditoria original | Historico |
 | `resumen_ejecutivo.md` | Resumen original | Historico |
-| `INFORME_FINAL_AUDITORIA.md` | Cierre historico | Historico |
+| `INFORME_FINAL_AUDITORIA.md` | Cierre + estabilidad | Vigente (actualizado 2026-05-14) |
 | `RESUMEN_CAMBIOS_2026-04-30.md` | Cambios historicos | Historico |
+| `auditoria_estabilidad_2026-05-14.md` | Estabilidad / rendimiento | Vigente |
 
 ## Nota importante
 

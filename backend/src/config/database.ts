@@ -27,19 +27,35 @@ export const pool = new Pool(poolConfig);
 
 // Manejo de errores del pool
 pool.on('error', (err) => {
-  console.error('Error inesperado en el pool de PostgreSQL:', err);
-  process.exit(-1);
+  console.error('⚠️ Error inesperado en el pool de PostgreSQL:', err.message);
+  // No salimos del proceso para permitir intentos de reconexión automáticos del pool
 });
 
-// Función helper para queries
+// Función helper para queries con logging detallado de errores
 export const query = async <T extends QueryResultRow = any>(
   text: string,
   params?: any[]
 ): Promise<QueryResult<T>> => {
+  const start = Date.now();
   const client = await pool.connect();
   try {
     const result = await client.query<T>(text, params);
+    
+    // Logging de performance en desarrollo (opcional)
+    if (process.env.NODE_ENV === 'development' && (Date.now() - start) > 500) {
+      console.warn(`🕒 Query lenta (${Date.now() - start}ms):`, text.substring(0, 100));
+    }
+    
     return result;
+  } catch (error: any) {
+    // ESTO ELIMINA LA CEGUERA: Logueamos exactamente qué falló
+    console.error('❌ ERROR DE BASE DE DATOS:');
+    console.error('📝 SQL:', text);
+    console.error('🔢 Parámetros:', params);
+    console.error('🔴 Error:', error.message);
+    if (error.code) console.error('🆔 Código PG:', error.code);
+    
+    throw error; // Re-lanzamos para que el errorHandler lo maneje
   } finally {
     client.release();
   }

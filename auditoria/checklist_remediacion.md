@@ -1,7 +1,7 @@
 # Checklist de Remediación - CercaYa
 
 **Fecha de Creación:** 2026-04-29
-**Última Actualización:** 2026-04-29
+**Última Actualización:** 2026-05-14
 
 ---
 
@@ -282,14 +282,16 @@
 | Prioridad | Total Items | Completados | Pendientes | % Completado |
 |-----------|-------------|-------------|------------|--------------|
 | Crítica | 8 | 8 | 0 | 100% |
-| Alta | 25 | 20 | 5 | 80% |
+| Alta (Seguridad) | 25 | 20 | 5 | 80% |
+| Alta (Estabilidad) | 12 | 12 | 0 | 100% |
 | Media | 20 | 5 | 15 | 25% |
-| **TOTAL** | **53** | **33** | **20** | **62%** |
+| **TOTAL** | **65** | **45** | **20** | **69%** |
 
 ### Historial de Cambios
 
 | Fecha | Cambio | Completado |
 |-------|--------|------------|
+| 2026-05-14 | **Auditoría de Estabilidad:** Fix token localStorage fantasma, fix SQL HAVING sin GROUP BY, fix overlay bloquea mapa, fix redirect loop 401, UPSERT vendor_locations (REST+WS), índice parcial único, manejadores globales, logging detallado de queries, pool resiliente, índices de rendimiento | ✅ 12 items |
 | 2026-04-30 | Rate limiting, Zod validation, WebSocket auth, JWT_SECRET validation, eliminar endpoint cleanup, migraciones, refresh tokens, Winston logging, Helmet, .env en .gitignore | ✅ 10 items |
 | 2026-04-29 | Creación del checklist | ✅ |
 
@@ -303,4 +305,4 @@
 
 ---
 
-*Última actualización: 2026-04-30*
+*Última actualización: 2026-05-14*

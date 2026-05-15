@@ -121,4 +121,14 @@ const startServer = async (): Promise<void> => {
   }
 };
 
+// Manejo global de errores para evitar que el proceso muera
+process.on('uncaughtException', (error) => {
+  console.error('🔥 UNCAUGHT EXCEPTION:', error);
+  // En producción podrías querer hacer un graceful shutdown aquí
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🌪️ UNHANDLED REJECTION at:', promise, 'reason:', reason);
+});
+
 startServer();

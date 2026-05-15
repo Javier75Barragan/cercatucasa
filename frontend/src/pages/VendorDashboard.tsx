@@ -189,8 +189,6 @@ const VendorDashboard = () => {
         
         if (response.data.token) {
           setToken(response.data.token);
-          // También actualizar en localStorage para el interceptor
-          localStorage.setItem('token', response.data.token);
         }
       } else {
         setFormError(response.data.error || 'Error al crear el negocio');
