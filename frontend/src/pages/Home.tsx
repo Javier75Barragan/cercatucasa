@@ -20,7 +20,7 @@ interface RadarEncounter {
 const Home = () => {
   const { location, error, isLoading: isGeoLoading, refreshLocation } = useGeolocation();
   const { setLocation } = useAuthStore();
-  const { vendors, setVendors, filters, setLoading, selectedVendor, isLoading } = useVendorsStore();
+  const { vendors, setVendors, filters, setFilters, setLoading, selectedVendor, isLoading } = useVendorsStore();
   const [showMobileList, setShowMobileList] = useState(false);
   const [showRadar, setShowRadar] = useState(false);
   const [showIncidentForm, setShowIncidentForm] = useState(false);
@@ -163,11 +163,11 @@ const Home = () => {
               <button 
                 onClick={() => {
                   setFilters({ radius: filters.radius + 500 });
-                  window.dispatchEvent(new CustomEvent('toggle-filters'));
+                  // No need to dispatch event if we just want to update filters
                 }} 
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-medium transition-all"
+                className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold transition-all shadow-glow-sm active:scale-95"
               >
-                Ajustar filtros (+500m)
+                Expandir búsqueda (+500m)
               </button>
             </div>
           )}
@@ -311,10 +311,20 @@ const Home = () => {
                   ))}
                 </div>
               ) : (
-                <div className="py-20 text-center">
-                  <div className="text-6xl mb-6 grayscale opacity-20">📡</div>
-                  <h3 className="text-white/60 font-bold mb-2">Sin señales próximas</h3>
-                  <p className="text-white/30 text-xs px-10">Prueba a moverte un poco o expande el radar en los filtros.</p>
+                <div className="py-20 text-center animate-fade-in px-8">
+                  <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-8 ring-1 ring-white/10">
+                    <Navigation className="w-10 h-10 text-white/20" />
+                  </div>
+                  <h3 className="text-white/80 font-bold text-xl mb-3 tracking-tight">Sin señales próximas</h3>
+                  <p className="text-white/40 text-sm leading-relaxed mb-10">
+                    No encontramos nada en este momento. Prueba expandiendo tu radio de búsqueda para ver más resultados.
+                  </p>
+                  <button 
+                    onClick={() => setFilters({ radius: filters.radius + 500 })}
+                    className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl font-bold transition-all shadow-glow active:scale-95"
+                  >
+                    Expandir Radio (+500m)
+                  </button>
                 </div>
               )}
             </div>

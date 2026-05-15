@@ -1,4 +1,3 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import cors from 'cors';
@@ -9,13 +8,13 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_secret_88b10ab1b1d3aece
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing-32chars!!';
 process.env.NODE_ENV = 'test';
 
-vi.mock('../config/database', () => ({
-  query: vi.fn(),
+jest.mock('../config/database', () => ({
+  query: jest.fn(),
 }));
 
 import { query } from '../config/database';
 
-const mockQuery = query as vi.MockedFunction<typeof query>;
+const mockQuery = query as jest.MockedFunction<typeof query>;
 
 process.env.JWT_SECRET = 'test-secret-key-for-testing-purposes-only-32chars';
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing-32chars!!';
@@ -33,10 +32,10 @@ app.set('trust proxy', 1);
 app.use('/api/products', productsRoutes);
 app.use(errorHandler);
 
-const mockUser = { userId: 'd3b3e3e3-e3e3-e3e3-e3e3-e3e3e3e3e3e3', email: 'test@example.com', role: 'seller' };
-const mockVendorId = 'v3b3e3e3-e3e3-e3e3-e3e3-e3e3e3e3e3e3';
+const mockUser = { userId: 'd3b3e3e3-e3e3-43e3-a3e3-e3e3e3e3e3e3', email: 'test@example.com', role: 'seller' as UserRole };
+const mockVendorId = 'a3b3e3e3-e3e3-43e3-a3e3-e3e3e3e3e3e3';
 const mockProduct = {
-  id: 'p3b3e3e3-e3e3-e3e3-e3e3-e3e3e3e3e3e3',
+  id: 'b3b3e3e3-e3e3-43e3-a3e3-e3e3e3e3e3e3',
   vendor_id: mockVendorId,
   name: 'Producto de Prueba',
   price: 1000,
@@ -44,9 +43,10 @@ const mockProduct = {
   category: 'Comida',
 };
 
+
 describe('POST /api/products', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    jest.resetAllMocks();
   });
 
   const validPayload = {
@@ -104,9 +104,10 @@ describe('POST /api/products', () => {
       .set('Authorization', `Bearer ${token}`)
       .send(validPayload);
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(403);
     expect(res.body.success).toBe(false);
   });
+
 
   it('debe devolver 403 si el vendedor no existe', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
@@ -117,9 +118,10 @@ describe('POST /api/products', () => {
       .set('Authorization', `Bearer ${token}`)
       .send(validPayload);
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(403);
     expect(res.body.success).toBe(false);
   });
+
 
   it('debe permitir admin crear productos para cualquier vendedor', async () => {
     // No verificamos propiedad si el usuario es admin
@@ -156,7 +158,7 @@ describe('POST /api/products', () => {
 
 describe('GET /api/products/vendor/:vendorId', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    jest.resetAllMocks();
   });
 
   it('debe listar productos disponibles de un vendedor (200)', async () => {
@@ -235,7 +237,7 @@ describe('GET /api/products/vendor/:vendorId', () => {
 
 describe('PUT /api/products/:id', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    jest.resetAllMocks();
   });
 
   const updatePayload = {
@@ -333,7 +335,7 @@ describe('PUT /api/products/:id', () => {
 
 describe('DELETE /api/products/:id', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    jest.resetAllMocks();
   });
 
   it('debe eliminar un producto (200)', async () => {

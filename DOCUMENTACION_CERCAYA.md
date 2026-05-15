@@ -665,13 +665,14 @@ npm run build
 
 ### Fase 2 - Cierre de beta
 
-- [ ] Ejecutar y revisar todos los tests backend nuevos.
-- [ ] Agregar tests frontend reales.
-- [ ] Corregir boton "Ajustar filtros".
-- [ ] Mejorar estado vacio.
+- [x] Ejecutar y revisar todos los tests backend nuevos.
+- [x] Agregar tests frontend reales.
+- [x] Corregir boton "Ajustar filtros".
+- [x] Mejorar estado vacio.
 - [ ] Validar flujo usuario encuentra vendedor.
 - [ ] Validar flujo vendedor aparece en mapa.
 - [ ] Validar flujo incidente.
+
 
 ### Fase 3 - Produccion
 

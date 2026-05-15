@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import { commonApi } from '../services/api';
 
 interface ImageUploaderProps {
   onUploadSuccess: (url: string) => void;
@@ -37,16 +37,10 @@ const ImageUploader = ({ onUploadSuccess, label = 'Subir Imagen', initialImage, 
     formData.append('image', file);
 
     try {
-      const token = localStorage.getItem('token'); // O del store
-      const response = await axios.post('http://localhost:3000/api/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await commonApi.uploadImage(formData);
 
       if (response.data.success) {
-        onUploadSuccess(response.data.url);
+        onUploadSuccess(response.data.data.url);
       }
     } catch (error) {
       console.error('Error al subir imagen:', error);

@@ -8,7 +8,12 @@ let io: Server;
 export const initializeWebSocket = (httpServer: HttpServer): Server => {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+      origin: [
+        process.env.CORS_ORIGIN || 'http://localhost:5173',
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'https://cercatucasa.vercel.app'
+      ],
       methods: ['GET', 'POST'],
       credentials: true,
     },

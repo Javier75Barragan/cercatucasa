@@ -146,4 +146,14 @@ export const incidentsApi = {
     api.get('/incidents/my-reports'),
 };
 
+// Common API
+export const commonApi = {
+  uploadImage: (formData: FormData) =>
+    api.post('/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }),
+};
+
 export default api;

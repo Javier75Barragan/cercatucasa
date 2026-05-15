@@ -32,7 +32,7 @@ pool.on('error', (err) => {
 });
 
 // Función helper para queries
-export const query = async <T extends Record<string, any> = any>(
+export const query = async <T extends QueryResultRow = any>(
   text: string,
   params?: any[]
 ): Promise<QueryResult<T>> => {

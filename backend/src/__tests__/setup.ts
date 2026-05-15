@@ -1,15 +1,14 @@
-import { vi } from 'vitest';
-
 // Mock global de la base de datos para evitar conexiones reales en tests unitarios
-vi.mock('../config/database', () => ({
-  query: vi.fn(),
+jest.mock('../config/database', () => ({
+  query: jest.fn(),
   pool: {
-    connect: vi.fn(),
-    query: vi.fn(),
-    end: vi.fn(),
+    connect: jest.fn(),
+    query: jest.fn(),
+    end: jest.fn(),
   }
 }));
 
 // Silenciar logs durante los tests para tener una salida limpia
-vi.spyOn(console, 'log').mockImplementation(() => {});
-vi.spyOn(console, 'error').mockImplementation(() => {});
+jest.spyOn(console, 'log').mockImplementation(() => {});
+jest.spyOn(console, 'error').mockImplementation(() => {});
+

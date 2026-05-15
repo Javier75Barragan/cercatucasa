@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
+import path from 'path';
+
 import { initializeWebSocket } from './services/websocket';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
@@ -20,6 +22,8 @@ import vendorRoutes from './routes/vendors';
 import productRoutes from './routes/products';
 import notificationRoutes from './routes/notifications';
 import incidentRoutes from './routes/incidents';
+import uploadRoutes from './routes/upload';
+
 
 dotenv.config();
 
@@ -60,6 +64,10 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Servir archivos estáticos (uploads)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+
 // Health check
 app.get('/health', (_req, res) => {
   res.json({
@@ -76,6 +84,8 @@ app.use('/api/vendors', vendorRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/incidents', incidentRoutes);
+app.use('/api/upload', uploadRoutes);
+
 
 // Documentación
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

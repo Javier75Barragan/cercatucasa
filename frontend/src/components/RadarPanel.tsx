@@ -1,4 +1,4 @@
-import { Clock, ArrowRight } from 'lucide-react';
+import { Clock, ArrowRight, X } from 'lucide-react';
 import { Vendor } from '../types';
 import { useVendorsStore } from '../stores/vendorsStore';
 
@@ -46,6 +46,12 @@ const RadarPanel = ({ encounters }: RadarPanelProps) => {
             <div className="w-2 h-2 bg-primary-500 rounded-full animate-ping"></div>
             <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white">Radar de Actividad</h2>
          </div>
+         <button 
+           onClick={onClose}
+           className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center text-white/40 hover:text-white transition-all"
+         >
+           <X size={16} />
+         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-1">

@@ -129,8 +129,8 @@ export const useGeolocation = (options?: PositionOptions) => {
     if (import.meta.env.DEV) {
       fallbackTimer = setTimeout(() => {
         setState(prev => {
-          if (prev.isLoading && !prev.location) {
-            console.log("Aplicando ubicación simulada por demora en GPS...");
+          if (prev.isLoading || prev.error) {
+            console.log("Aplicando ubicación simulada (Modo DEV)...");
             return {
               location: { lat: 7.065, lng: -73.84, accuracy: 10 },
               error: null,
