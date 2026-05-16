@@ -29,7 +29,7 @@ const categoryIcons: Record<string, string> = {
   other: '📍',
 };
 
-const RadarPanel = ({ encounters }: RadarPanelProps) => {
+const RadarPanel = ({ encounters, onClose }: RadarPanelProps) => {
   const { setSelectedVendor } = useVendorsStore();
 
   const formatLastSeen = (date: Date) => {

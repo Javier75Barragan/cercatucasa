@@ -4,7 +4,7 @@ import { authenticate, authorize, generateToken, optionalAuth } from '../middlew
 import { asyncHandler } from '../middleware/errorHandler';
 import { validate } from '../middleware/validate';
 import { createVendorSchema, updateVendorSchema, updateLocationSchema, toggleLocationSchema, reviewSchema } from '../schemas/vendors';
-import { ApiResponse, Vendor, VendorLocation, VendorSchedule } from '../types';
+import { ApiResponse, Vendor, VendorLocation } from '../types';
 
 const router = Router();
 

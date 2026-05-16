@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import rateLimit from 'express-rate-limit';
 import { query } from '../config/database';
-import { generateToken, generateRefreshToken, authenticate, verifyToken, verifyRefreshToken } from '../middleware/auth';
+import { generateToken, generateRefreshToken, authenticate, verifyRefreshToken } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { validate } from '../middleware/validate';
 import { registerSchema, loginSchema, updateProfileSchema, updatePasswordSchema, refreshTokenSchema } from '../schemas/auth';

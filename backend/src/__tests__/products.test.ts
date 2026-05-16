@@ -128,8 +128,6 @@ describe('POST /api/products', () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [mockProduct], rowCount: 1 } as any); // Insert solo
 
-    const token = generateToken({ ...mockUser, role: 'admin' as UserRole });
-
     // Este test es ilustrativo - en la práctica requeriría setup adicional
     // para mockear el token admin correctamente
   });

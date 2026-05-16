@@ -388,8 +388,7 @@ describe('POST /api/vendors/:id/location', () => {
   it('debe actualizar ubicación del vendedor (200)', async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [{ user_id: mockUser.userId }], rowCount: 1 } as any) // Check owner
-      .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any) // Deactivate old
-      .mockResolvedValueOnce({ rows: [{ ...mockVendorLocation, ...locationPayload }], rowCount: 1 } as any); // Insert new
+      .mockResolvedValueOnce({ rows: [{ ...mockVendorLocation, ...locationPayload }], rowCount: 1 } as any); // Upsert location
 
 
     const token = generateToken(mockUser);

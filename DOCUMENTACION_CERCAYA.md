@@ -649,8 +649,8 @@ npm run build
 | UX principal | Prometedora | Estado vacio y filtros necesitan cierre. |
 | Documentacion | Abundante | Ahora consolidada en este archivo. |
 | Auditoria | En proceso | Seguridad y producto documentados. |
-| CI/CD | Pendiente | Necesario antes de produccion. |
-| E2E | Pendiente | Necesario para validar objetivo real. |
+| CI/CD | Configurado | Workflow GitHub Actions con lint, test y build para backend/frontend. |
+| E2E | Iniciado | Primer flujo browser: usuario encuentra vendedor cercano con API mockeada. |
 
 ---
 
@@ -669,14 +669,14 @@ npm run build
 - [x] Agregar tests frontend reales.
 - [x] Corregir boton "Ajustar filtros".
 - [x] Mejorar estado vacio.
-- [ ] Validar flujo usuario encuentra vendedor.
+- [x] Validar flujo usuario encuentra vendedor.
 - [ ] Validar flujo vendedor aparece en mapa.
 - [ ] Validar flujo incidente.
 
 
 ### Fase 3 - Produccion
 
-- [ ] CI/CD con test, lint y build.
+- [x] CI/CD con test, lint y build.
 - [ ] E2E estables.
 - [ ] Observabilidad.
 - [ ] Revision final de seguridad.

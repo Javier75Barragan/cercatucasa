@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MapPin, Power, Store, Package, X, Clock, Signal, Edit3, Heart, Eye, Loader2, AlertTriangle, Bell, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -76,11 +75,6 @@ const VendorDashboard = () => {
     favorites: 32
   });
 
-  useEffect(() => {
-    loadCategories();
-    loadVendor();
-  }, []);
-
   const loadCategories = async () => {
     try {
       const response = await vendorsApi.getCategories();
@@ -90,13 +84,7 @@ const VendorDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (geoLocation) {
-      setLocation(geoLocation);
-    }
-  }, [geoLocation, setLocation]);
-
-  const loadVendor = async () => {
+  const loadVendor = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
     try {
@@ -113,7 +101,18 @@ const VendorDashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [joinVendorRoom, user]);
+
+  useEffect(() => {
+    loadCategories();
+    loadVendor();
+  }, [loadVendor]);
+
+  useEffect(() => {
+    if (geoLocation) {
+      setLocation(geoLocation);
+    }
+  }, [geoLocation, setLocation]);
 
   const handleToggleActive = async () => {
     if (!vendor) return;
