@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Star, MapPin, Phone, Clock, Globe, MessageCircle, Navigation, Building2 } from 'lucide-react';
+import { X, Star, MapPin, Phone, Clock, Globe, MessageCircle, Navigation, Building2, Store } from 'lucide-react';
 import { useVendorsStore } from '../stores/vendorsStore';
 import { vendorsApi } from '../services/api';
 
@@ -96,12 +96,12 @@ const VendorDetails = () => {
     <>
       {/* Overlay móvil */}
       <div
-        className="fixed inset-0 bg-dark-950/80 backdrop-blur-sm z-[500] transition-opacity"
+        className="fixed inset-0 bg-surface-950/80 backdrop-blur-sm z-[500] transition-opacity"
         onClick={() => setSelectedVendor(null)}
       />
 
       {/* Panel responsivo: Drawer en móvil, Sidebar a la derecha en escritorio */}
-      <div className="fixed bottom-0 left-0 right-0 h-[85vh] rounded-t-3xl md:h-full md:top-0 md:rounded-none md:left-auto md:w-[400px] glass-light z-[600] shadow-dark-lg overflow-y-auto animate-slide-up flex flex-col">
+      <div className="fixed bottom-0 left-0 right-0 z-[600] flex h-[88vh] flex-col overflow-hidden rounded-t-[32px] border border-white/[0.07] bg-surface-950/95 shadow-dark-lg backdrop-blur-xl animate-slide-up md:left-auto md:top-0 md:h-full md:w-[430px] md:rounded-none">
         
         {/* Handle de arrastre móvil */}
         <div className="flex justify-center pt-3 pb-2 md:hidden">
@@ -109,7 +109,7 @@ const VendorDetails = () => {
         </div>
 
         {/* Header con imagen dinámica */}
-        <div className={`relative h-48 sm:h-56 shrink-0 ${
+        <div className={`relative h-56 shrink-0 overflow-hidden ${
             isEnterprise 
               ? 'bg-gradient-to-br from-accent-600 to-accent-900' 
               : 'bg-gradient-to-br from-primary-600 to-primary-900'
@@ -122,17 +122,19 @@ const VendorDetails = () => {
               className="w-full h-full object-cover opacity-80 mix-blend-overlay"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center opacity-60">
+            <div className="w-full h-full flex flex-col items-center justify-center opacity-70">
               <span className="text-6xl mb-2">{categoryIcons[selectedVendor.category] || '📍'}</span>
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-950/40 to-transparent" />
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(255,255,255,0.08)_0_12px,transparent_12px_24px)] opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-surface-950 via-surface-950/45 to-transparent" />
 
           {/* Botones de cerrar / volver */}
           <button
             onClick={() => setSelectedVendor(null)}
-            className="absolute top-4 right-4 w-9 h-9 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white/80 hover:text-white transition-colors"
+            className="absolute top-4 right-4 w-10 h-10 bg-black/40 backdrop-blur-md rounded-2xl flex items-center justify-center text-white/80 hover:text-white transition-colors"
+            aria-label="Cerrar detalle del vendedor"
           >
             <X className="w-5 h-5" />
           </button>
@@ -168,16 +170,19 @@ const VendorDetails = () => {
         </div>
 
         {/* Contenido scrolleable */}
-        <div className="flex-1 p-6 pt-10 overflow-y-auto">
+        <div className="custom-scrollbar flex-1 overflow-y-auto p-6 pt-10">
           {/* Título y categoría */}
           <div className="mb-6 border-b border-white/[0.06] pb-5">
-            <div className="flex items-start justify-between gap-4 mb-2">
-              <h1 className="text-2xl font-bold text-white tracking-tight leading-tight">
-                {selectedVendor.name}
-              </h1>
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <div>
+                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.22em] text-primary-400/80">Vendedor verificado</p>
+                <h1 className="text-3xl font-black text-white tracking-tight leading-tight">
+                  {selectedVendor.name}
+                </h1>
+              </div>
               {selectedVendor.is_verified && (
-                <span className="flex-shrink-0 w-6 h-6 bg-primary-500/20 rounded-full flex items-center justify-center mt-1" title="Servicio Verificado">
-                  <span className="text-primary-400 text-sm font-bold">✓</span>
+                <span className="flex-shrink-0 w-8 h-8 bg-primary-500/20 rounded-2xl flex items-center justify-center mt-1" title="Servicio Verificado">
+                  <Store className="h-4 w-4 text-primary-400" />
                 </span>
               )}
             </div>
@@ -198,14 +203,20 @@ const VendorDetails = () => {
               )}
             </div>
 
-            {/* Rating */}
-            {selectedVendor.rating > 0 && (
-              <div className="flex items-center gap-2 mt-3">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 drop-shadow-sm" />
-                <span className="font-semibold text-white/90">{selectedVendor.rating}</span>
-                <span className="text-sm text-white/40">({selectedVendor.review_count} opiniones)</span>
+            <div className="mt-5 grid grid-cols-3 gap-3">
+              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.04] p-4">
+                <span className="block text-lg font-black text-white">{selectedVendor.rating > 0 ? selectedVendor.rating : 'Nuevo'}</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-white/40">rating</span>
               </div>
-            )}
+              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.04] p-4">
+                <span className="block text-lg font-black text-white">{selectedVendor.review_count || 0}</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-white/40">opiniones</span>
+              </div>
+              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.04] p-4">
+                <span className="block text-lg font-black text-white">{selectedVendor.distance_meters ? `${Math.round(selectedVendor.distance_meters)}m` : 'Cerca'}</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-white/40">distancia</span>
+              </div>
+            </div>
           </div>
 
           {/* RASTREO EN VIVO (Solo para mensajeros y flotas) */}
@@ -223,17 +234,17 @@ const VendorDetails = () => {
           )}
 
           {/* Botones de acción principal */}
-          <div className="flex gap-3 mb-8">
+          <div className="grid grid-cols-2 gap-3 mb-8">
             <button
               onClick={handleWhatsApp}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold shadow-lg shadow-green-500/20 hover:shadow-green-500/40 hover:-translate-y-0.5 transition-all"
+              className="flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-2xl font-bold shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:-translate-y-0.5 transition-all"
             >
               <MessageCircle className="w-5 h-5" />
               Contactar
             </button>
             <button
               onClick={handleGetDirections}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-white/5 text-white hover:bg-white/10 rounded-xl font-medium border border-white/10 transition-all hover:-translate-y-0.5"
+              className="flex items-center justify-center gap-2 py-4 bg-white/5 text-white hover:bg-white/10 rounded-2xl font-bold border border-white/10 transition-all hover:-translate-y-0.5"
             >
               <Navigation className="w-5 h-5" />
               Ruta

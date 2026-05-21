@@ -107,6 +107,23 @@ describe('Home Page', () => {
     expect(screen.getByText(/Cerca de ti/i)).toBeInTheDocument();
   });
 
+  it('presents the refreshed community radar language in the desktop sidebar', () => {
+    (useVendorsStore as any).mockReturnValue({
+      vendors: [mockVendor],
+      setVendors: mockSetVendors,
+      filters: { radius: 200 },
+      setFilters: mockSetFilters,
+      setLoading: mockSetLoading,
+      selectedVendor: null,
+      isLoading: false,
+    });
+
+    render(<Home />);
+
+    expect(screen.getByText(/Radar comunitario/i)).toBeInTheDocument();
+    expect(screen.getByText(/Última hora en tu zona/i)).toBeInTheDocument();
+  });
+
   it('shows empty state when no vendors are found', async () => {
     // Override store mock to show no vendors
     (useVendorsStore as any).mockReturnValue({

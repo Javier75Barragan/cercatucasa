@@ -2,6 +2,30 @@
 
 Todas las modificaciones notables realizadas a este proyecto serán documentadas en este archivo.
 
+## [17/05/2026] - Actualización visual mobile-first de CercaYa
+
+### Frontend / UX
+- **Mejorado:** `frontend/src/pages/Home.tsx` con un panel lateral renovado orientado a "Radar comunitario", métricas de actividad, radio y encuentros, y CTA de alertas más visible.
+- **Mejorado:** `frontend/src/components/RadarPanel.tsx` con KPIs de actividad, estado "Por revisar", tarjetas de encuentros más claras y controles más táctiles.
+- **Mejorado:** `frontend/src/components/VendorDetails.tsx` con panel de detalle más moderno, hero visual, métricas compactas de rating/opiniones/distancia y acciones principales `Contactar` / `Ruta`.
+- **Mejorado:** `frontend/src/pages/Login.tsx` para que la pantalla de inicio de sesión sea más pequeña y cómoda en celular: menor ancho, logo más pequeño, padding reducido, inputs compactos y botón más bajo.
+
+### Producto
+- **Definido:** El criterio visual principal del proyecto pasa a ser **mobile-first**. CercaYa debe revisarse primero en celular porque el uso esperado ocurre en la calle, con el teléfono en la mano.
+- **Mantenido:** La implementación conserva la arquitectura actual de CercaYa (`React + Leaflet + backend propio`) y no adopta Firebase ni Google Maps del prototipo externo analizado.
+
+### Testing
+- **Agregado:** Prueba de contrato visual para `Home` validando el lenguaje de "Radar comunitario".
+- **Agregado:** Prueba de `RadarPanel` validando los KPIs de actividad.
+- **Agregado:** Prueba de `Login` validando que el panel de inicio de sesión sea compacto.
+- **Verificado:** `npm test -- --run` con 18 tests pasando.
+- **Verificado:** `npm run build` exitoso. Se mantiene advertencia conocida de bundle principal mayor a 500 kB.
+
+### Documentación
+- **Actualizado:** `DOCUMENTACION_CERCAYA.md` con la decisión mobile-first, el resumen de cambios visuales y el nuevo estado de pruebas frontend.
+
+---
+
 ## [07/05/2026] - Correcciones Auditoría Técnica P1 — Build & Seguridad
 
 ### 🐛 Bug Fix Crítico

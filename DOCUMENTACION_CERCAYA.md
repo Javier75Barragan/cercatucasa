@@ -469,19 +469,20 @@ npm run build
 Resultado observado:
 
 - Frontend build OK.
-- El test frontend original era de humo y no validaba comportamiento real.
+- La suite frontend actual incluye pruebas reales para `Home`, `RadarPanel` y `Login`.
+- Se agregaron pruebas de contrato visual para el lenguaje de radar comunitario, KPIs del radar y tarjeta compacta de inicio de sesion.
 - Build mostro advertencia de bundle principal mayor a 500 kB.
 
 ### Pruebas prioritarias pendientes
 
 Frontend:
 
-- `Home`
+- Validacion visual mobile-first de `Home`
 - `Map`
 - `MapFilters`
 - Auth flow
 - Dashboard vendedor
-- Estado vacio
+- Estado vacio con recuperacion completa
 - Ubicacion denegada
 - Detalle de vendedor
 - Incidentes
@@ -508,6 +509,40 @@ End-to-end:
 
 ## 11. UX y producto
 
+### Actualizacion visual mobile-first - 2026-05-17
+
+Se incorporo una mejora visual inspirada en el prototipo comparativo `proyecto-gemenis`, adaptada a la arquitectura real de CercaYa y sin migrar a Firebase ni Google Maps. La prioridad de diseno queda definida como **mobile-first**: cada cambio visual debe revisarse primero en viewport de celular y despues en escritorio.
+
+Cambios aplicados:
+
+- `frontend/src/pages/Home.tsx`
+  - Panel lateral de escritorio renovado con lenguaje de "Radar comunitario".
+  - Metricas rapidas de activos, encuentros y radio.
+  - CTA de alertas mas visible y conectado a la apertura del radar.
+  - Estado vacio mantiene accion para ampliar busqueda.
+
+- `frontend/src/components/RadarPanel.tsx`
+  - Redisenado como panel de actividad local.
+  - Agrega KPIs "Actividad hoy" y "Por revisar".
+  - Lista de encuentros con tarjetas tactiles y mejor jerarquia visual.
+
+- `frontend/src/components/VendorDetails.tsx`
+  - Panel de detalle mas compacto y moderno.
+  - Hero visual con categoria/foto, estado activo y cierre accesible.
+  - Metricas de rating, opiniones y distancia.
+  - Botones principales `Contactar` y `Ruta` con mayor area tactil.
+
+- `frontend/src/pages/Login.tsx`
+  - Pantalla de inicio de sesion compactada para celular.
+  - Menor ancho maximo, logo mas pequeno, padding reducido, inputs y boton mas bajos.
+  - Mantiene el estilo premium pero evita ocupar demasiada altura en pantallas moviles.
+
+Regla de producto vigente:
+
+- CercaYa debe sentirse como una app de calle: rapida, tactil, clara y usable con una mano.
+- Evitar pantallas de escritorio encogidas en celular.
+- Todo formulario o panel importante debe validarse visualmente en viewport movil antes de cerrar el cambio.
+
 ### Pantalla principal
 
 Fortalezas:
@@ -515,15 +550,18 @@ Fortalezas:
 - El mapa es protagonista.
 - El radio de busqueda comunica cercania.
 - La interfaz tiene direccion visual clara.
-- El panel lateral explica resultados cercanos.
+- El panel lateral explica resultados cercanos y actividad comunitaria.
+- El radar ahora tiene KPIs y tarjetas de actividad mas legibles.
+- El detalle de vendedor muestra informacion clave y acciones principales con mejor jerarquia.
 
 Riesgos:
 
-- Estado vacio demasiado pasivo.
-- Acciones de recuperacion insuficientes.
+- Estado vacio todavia debe validarse con usuarios reales.
+- Acciones de recuperacion deben probarse en flujo completo.
 - Filtros deben abrirse claramente desde estados sin resultados.
 - El texto secundario debe cuidar contraste.
 - La busqueda debe tener comportamiento definido.
+- La experiencia movil debe seguir siendo el criterio principal de aceptacion.
 
 Mejoras recomendadas:
 
@@ -532,6 +570,7 @@ Mejoras recomendadas:
 3. Hacer el radio editable desde el panel cuando no hay resultados.
 4. Definir busqueda por nombre, categoria, producto o empresa.
 5. Probar accesibilidad de contraste, foco y navegacion.
+6. Revisar cada pantalla principal en celular antes de escritorio.
 
 ---
 
@@ -645,8 +684,8 @@ npm run build
 | Arquitectura | Buena | Backend/frontend separados, TypeScript completo. |
 | Seguridad | Fuerte pero requiere verificacion final | Remediacion avanzada, falta validar entorno/historial. |
 | Backend | Parcialmente probado | Auth cubierto; faltan modulos centrales. |
-| Frontend | Compila, poco probado | Requiere tests reales. |
-| UX principal | Prometedora | Estado vacio y filtros necesitan cierre. |
+| Frontend | Compila y tiene pruebas UI iniciales | Cubiertos contratos visuales de Home, RadarPanel y Login; faltan flujos completos. |
+| UX principal | Mejorada con enfoque mobile-first | Radar, detalle de vendedor e inicio de sesion fueron compactados/renovados. |
 | Documentacion | Abundante | Ahora consolidada en este archivo. |
 | Auditoria | En proceso | Seguridad y producto documentados. |
 | CI/CD | Configurado | Workflow GitHub Actions con lint, test y build para backend/frontend. |
@@ -670,8 +709,10 @@ npm run build
 - [x] Corregir boton "Ajustar filtros".
 - [x] Mejorar estado vacio.
 - [x] Validar flujo usuario encuentra vendedor.
+- [x] Aplicar actualizacion visual mobile-first en Home, RadarPanel, VendorDetails y Login.
 - [ ] Validar flujo vendedor aparece en mapa.
 - [ ] Validar flujo incidente.
+- [ ] Revisar visualmente todas las pantallas criticas en celular.
 
 
 ### Fase 3 - Produccion

@@ -45,33 +45,33 @@ const Login = () => {
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-500/10 rounded-full blur-[120px] animate-pulse-slow"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent-500/10 rounded-full blur-[120px] animate-pulse-slow font-delay-2000"></div>
 
-      <div className="w-full max-w-md animate-scale-in">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 glass rounded-3xl shadow-glow-md mb-8 relative group">
+      <div data-testid="login-panel" className="w-full max-w-sm animate-scale-in">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-14 h-14 glass rounded-2xl shadow-glow-md mb-5 relative group">
             <div className="absolute inset-0 bg-white/5 rounded-3xl blur-xl group-hover:bg-white/10 transition-all"></div>
             <img 
               src="/logo.png" 
               alt="Logo CercaYa" 
-              className="w-14 h-14 object-contain relative z-10 drop-shadow-[0_0_12px_rgba(255,255,255,0.8)] brightness-125"
+              className="w-10 h-10 object-contain relative z-10 drop-shadow-[0_0_12px_rgba(255,255,255,0.8)] brightness-125"
             />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+          <h1 className="text-2xl font-extrabold text-white tracking-tight mb-1.5">
             Bienvenido de <span className="gradient-text">Nuevo</span>
           </h1>
-          <p className="text-white/40 text-sm">
+          <p className="text-white/40 text-xs">
             Toda tu comunidad a solo un clic de distancia.
           </p>
         </div>
 
-        <div className="glass rounded-[32px] p-8 md:p-10 shadow-dark-lg border-white/[0.08]">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="glass rounded-3xl p-5 md:p-6 shadow-dark-lg border-white/[0.08]">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-xs font-medium animate-shake text-center">
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-xs font-medium animate-shake text-center">
                 {error}
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-white/30 truncate uppercase tracking-widest pl-1">
                   Correo Electrónico
@@ -85,7 +85,7 @@ const Login = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="input-glass pl-11"
+                    className="input-glass pl-11 py-2.5 text-sm"
                     placeholder="tu@email.com"
                   />
                 </div>
@@ -109,7 +109,7 @@ const Login = () => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="input-glass pl-11"
+                    className="input-glass pl-11 py-2.5 text-sm"
                     placeholder="••••••••"
                   />
                 </div>
@@ -119,21 +119,21 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full btn-primary h-14 flex items-center justify-center gap-3 text-base shadow-glow-sm hover:shadow-glow-md"
+              className="w-full btn-primary h-12 flex items-center justify-center gap-2.5 text-sm shadow-glow-sm hover:shadow-glow-md"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
                   <span>Ingresar a CercaYa</span>
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-10 pt-8 border-t border-white/[0.06] text-center">
-            <p className="text-sm text-white/30">
+          <div className="mt-6 pt-5 border-t border-white/[0.06] text-center">
+            <p className="text-xs text-white/30">
               ¿No tienes una cuenta?{' '}
               <Link to="/register" className="font-bold text-white hover:text-primary-400 transition-colors inline-flex items-center gap-1 group">
                 Regístrate gratis
@@ -144,7 +144,7 @@ const Login = () => {
         </div>
         
         {/* Helper footer */}
-        <p className="text-center mt-8 text-[11px] text-white/20 uppercase tracking-[0.2em]">
+        <p className="text-center mt-5 text-[10px] text-white/20 uppercase tracking-[0.18em]">
           Plataforma de Confianza Sectorial &bull; 2026
         </p>
       </div>

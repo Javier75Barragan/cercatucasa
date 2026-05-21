@@ -60,6 +60,32 @@ describe('RadarPanel Component', () => {
     expect(screen.getByText(/Hace un momento/i)).toBeInTheDocument();
   });
 
+  it('shows community activity summary metrics', () => {
+    const mockEncounters = [
+      {
+        vendor: {
+          id: 'v1',
+          name: 'Helados Don Pepe',
+          category: 'other',
+        } as any,
+        lastSeen: new Date(),
+      },
+      {
+        vendor: {
+          id: 'v2',
+          name: 'Frutas La 27',
+          category: 'fruits_vegetables',
+        } as any,
+        lastSeen: new Date(Date.now() - 1000 * 60 * 15),
+      },
+    ];
+
+    render(<RadarPanel encounters={mockEncounters} onClose={vi.fn()} />);
+
+    expect(screen.getByText(/Actividad hoy/i)).toBeInTheDocument();
+    expect(screen.getByText(/Por revisar/i)).toBeInTheDocument();
+  });
+
   it('calls setSelectedVendor when an encounter is clicked', () => {
     const mockVendor = {
       id: 'v1',

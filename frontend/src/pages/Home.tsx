@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { List, X, Navigation, Loader2, BellRing, AlertTriangle } from 'lucide-react';
+import { List, X, Navigation, Loader2, BellRing, AlertTriangle, Store, Radio } from 'lucide-react';
 import Map from '../components/Map';
 import MapFilters from '../components/MapFilters';
 import VendorCard from '../components/VendorCard';
@@ -120,23 +120,50 @@ const Home = () => {
     <div className="h-screen pt-14 md:pt-16 flex flex-col md:flex-row bg-surface-950 text-white overflow-hidden">
       
       {/* Sidebar - Desktop */}
-      <div className="hidden md:flex flex-col w-96 glass border-r border-white/[0.06] overflow-hidden z-10 transition-all duration-300">
-        <div className="p-6 border-b border-white/[0.06] bg-white/[0.02]">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-lg font-bold tracking-tight text-white/90">
-              Cerca de ti
-            </h2>
-            <div className="flex items-center gap-1.5 px-2 py-1 bg-primary-500/10 rounded-lg">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
-              </span>
-              <span className="text-[10px] font-bold text-primary-400 uppercase tracking-widest leading-none">Vivo</span>
+      <div className="hidden md:flex flex-col w-[390px] bg-surface-950/90 backdrop-blur-xl border-r border-white/[0.07] overflow-hidden z-10 transition-all duration-300 shadow-dark-lg">
+        <div className="p-6 border-b border-white/[0.07] bg-white/[0.025]">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-primary-400/80">Radar comunitario</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-white">
+                Última hora en tu zona
+              </h2>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-primary-500/15 border border-primary-500/25 flex items-center justify-center text-primary-300 shadow-glow-sm">
+              <Radio className="w-6 h-6" />
             </div>
           </div>
-          <p className="text-xs text-white/40">
-            Mostrando <span className="text-white/70 font-semibold">{vendors.length}</span> resultados en <span className="text-white/70 font-semibold">{filters.radius}m</span>
-          </p>
+
+          <div className="grid grid-cols-3 gap-2 mb-5">
+            <div className="rounded-xl border border-white/[0.07] bg-white/[0.04] p-3">
+              <span className="block text-xl font-black text-white">{vendors.length}</span>
+              <span className="text-[9px] font-black uppercase tracking-wider text-white/40">activos</span>
+            </div>
+            <div className="rounded-xl border border-white/[0.07] bg-white/[0.04] p-3">
+              <span className="block text-xl font-black text-white">{encounters.length}</span>
+              <span className="text-[9px] font-black uppercase tracking-wider text-white/40">encuentros</span>
+            </div>
+            <div className="rounded-xl border border-white/[0.07] bg-white/[0.04] p-3">
+              <span className="block text-xl font-black text-white">{filters.radius}m</span>
+              <span className="text-[9px] font-black uppercase tracking-wider text-white/40">radio</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-2xl border border-primary-500/20 bg-primary-500/10 px-4 py-3">
+            <div>
+              <h3 className="text-sm font-bold text-white/90">Cerca de ti</h3>
+              <p className="text-xs text-white/45">
+                Mostrando <span className="text-white/75 font-semibold">{vendors.length}</span> resultados en vivo
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-500/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-primary-300">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-400" />
+              </span>
+              Vivo
+            </span>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
@@ -153,8 +180,8 @@ const Home = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 px-6 text-center animate-fade-in">
-              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 ring-1 ring-white/10">
-                <Navigation className="w-8 h-8 text-white/20" />
+              <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-6 ring-1 ring-white/10">
+                <Store className="w-8 h-8 text-white/20" />
               </div>
               <h3 className="text-white/80 font-semibold mb-2">Silencio en el área</h3>
               <p className="text-white/40 text-xs leading-relaxed mb-6">
@@ -175,15 +202,19 @@ const Home = () => {
         
         {/* Ad or Promo slot at bottom of sidebar */}
         <div className="p-4 bg-primary-500/5 mt-auto border-t border-white/[0.06]">
-          <div className="flex items-center gap-3 glass-accent p-3 rounded-xl border-primary-500/20">
-            <div className="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center shadow-glow-sm">
+          <button
+            type="button"
+            onClick={() => setShowRadar(true)}
+            className="w-full flex items-center gap-3 glass-accent p-3 rounded-xl border border-primary-500/20 text-left transition-all hover:border-primary-400/40 hover:bg-primary-500/10"
+          >
+            <div className="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center shadow-glow-sm shrink-0">
               <BellRing className="w-5 h-5 text-white animate-pulse-slow" />
             </div>
             <div>
               <p className="text-[11px] font-bold text-primary-400 uppercase">Alertas Activas</p>
               <p className="text-[10px] text-white/50">Te avisaremos con un sonido cuando algo nuevo pase cerca.</p>
             </div>
-          </div>
+          </button>
         </div>
       </div>
 
