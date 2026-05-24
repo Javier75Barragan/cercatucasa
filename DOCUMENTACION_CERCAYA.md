@@ -394,6 +394,12 @@ La seguridad critica parece mayormente remediada, pero antes de produccion se de
 - Pruebas de WebSocket con token invalido, ausente y usuario sin permisos.
 - Configuracion real de CORS, rate limit y secretos en produccion.
 
+Actualizacion de mantenimiento 2026-05-24:
+
+- Backend sin vulnerabilidades activas en `npm audit`.
+- Frontend reducido a 2 vulnerabilidades `moderate`, ambas relacionadas con `vite/esbuild`.
+- La remediacion completa del frontend queda pendiente de una migracion a `vite@8`, tratada como upgrade mayor de tooling y no como parche menor.
+
 ---
 
 ## 9. Auditoria
@@ -458,6 +464,7 @@ Resultado observado:
 - Backend build OK.
 - Tests backend existentes pasaron.
 - Cobertura real concentrada inicialmente en autenticacion.
+- Mantenimiento 2026-05-24: `npm test -- src/__tests__/middleware.test.ts` y `npm run build` verificados nuevamente en verde.
 
 Frontend:
 
@@ -472,6 +479,8 @@ Resultado observado:
 - La suite frontend actual incluye pruebas reales para `Home`, `RadarPanel` y `Login`.
 - Se agregaron pruebas de contrato visual para el lenguaje de radar comunitario, KPIs del radar y tarjeta compacta de inicio de sesion.
 - Build mostro advertencia de bundle principal mayor a 500 kB.
+- Mantenimiento 2026-05-24: pruebas de `Home`, `Login` y `RadarPanel` nuevamente en verde.
+- Mantenimiento 2026-05-24: `npm run build` no pudo certificarse por un error de resolucion/acceso a `vite.config.ts` reportado por `esbuild`.
 
 ### Pruebas prioritarias pendientes
 
@@ -683,8 +692,8 @@ npm run build
 | Objetivo de producto | Claro | Conectar actividad cercana en tiempo real. |
 | Arquitectura | Buena | Backend/frontend separados, TypeScript completo. |
 | Seguridad | Fuerte pero requiere verificacion final | Remediacion avanzada, falta validar entorno/historial. |
-| Backend | Parcialmente probado | Auth cubierto; faltan modulos centrales. |
-| Frontend | Compila y tiene pruebas UI iniciales | Cubiertos contratos visuales de Home, RadarPanel y Login; faltan flujos completos. |
+| Backend | Endurecido y verificado | `npm audit` en 0; auth/middleware y build verificados. |
+| Frontend | Parcialmente verificado | Pruebas UI de Home, RadarPanel y Login en verde; quedan 2 moderadas de `vite/esbuild` y el build necesita revision adicional. |
 | UX principal | Mejorada con enfoque mobile-first | Radar, detalle de vendedor e inicio de sesion fueron compactados/renovados. |
 | Documentacion | Abundante | Ahora consolidada en este archivo. |
 | Auditoria | En proceso | Seguridad y producto documentados. |
@@ -720,6 +729,7 @@ npm run build
 - [x] CI/CD con test, lint y build.
 - [ ] E2E estables.
 - [ ] Observabilidad.
+- [ ] Migracion controlada de `vite` a `8.x` para cerrar las 2 vulnerabilidades `moderate` restantes del frontend.
 - [ ] Revision final de seguridad.
 - [ ] Politica de privacidad/ubicacion.
 - [ ] Validacion con usuarios reales.

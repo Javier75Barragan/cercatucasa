@@ -2,6 +2,25 @@
 
 Todas las modificaciones notables realizadas a este proyecto serán documentadas en este archivo.
 
+## [24/05/2026] - Mantenimiento de dependencias y auditoría npm
+
+### Seguridad y mantenimiento
+- **Verificado:** El repositorio no tenía cambios pendientes sin commit al momento de la revisión. La actualización mobile-first del `17/05` ya estaba resguardada en el commit `ae26059`.
+- **Actualizado:** Dependencias de mantenimiento en `frontend` y `backend`, incluyendo `@typescript-eslint/eslint-plugin` y `@typescript-eslint/parser` a la línea `8.x`, con regeneración de `package-lock.json` en ambos proyectos.
+- **Corregido:** Vulnerabilidades de `axios` y otras dependencias transitivas del frontend mediante actualización segura de dependencias y lockfile.
+- **Corregido:** Vulnerabilidades transitivas del backend, dejando el `npm audit` del backend en `0` hallazgos.
+
+### Estado resultante
+- **Backend:** `npm audit` quedó en `0` vulnerabilidades.
+- **Frontend:** `npm audit` quedó en `2` vulnerabilidades `moderate`, ambas asociadas a `vite/esbuild`.
+- **Pendiente:** La remediación completa del frontend requiere migración a `vite@8`, considerada una actualización mayor de tooling y no un parche automático seguro.
+
+### Verificación
+- **Verificado:** `backend npm test -- src/__tests__/middleware.test.ts` pasando.
+- **Verificado:** `backend npm run build` pasando.
+- **Verificado:** `frontend` mantiene en verde las pruebas tocadas de `Home`, `Login` y `RadarPanel`.
+- **Observado:** `frontend npm run build` sigue presentando un problema de resolución/acceso a `vite.config.ts` desde `esbuild`; no se considera resuelto en esta sesión.
+
 ## [17/05/2026] - Actualización visual mobile-first de CercaYa
 
 ### Frontend / UX
