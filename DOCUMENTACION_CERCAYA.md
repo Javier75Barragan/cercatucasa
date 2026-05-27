@@ -225,6 +225,7 @@ Stack:
 - PostGIS
 - Socket.IO
 - Zod
+- Cookie-parser
 - JWT
 - bcrypt
 - Helmet
@@ -258,6 +259,7 @@ Stack:
 - React Router
 - Axios
 - Leaflet / React Leaflet
+- Configuración: `withCredentials: true` para persistencia de sesión vía cookies.
 - Socket.IO Client
 - React Hook Form
 - Zod
@@ -287,6 +289,7 @@ Endpoints principales:
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
+- `POST /api/auth/logout`
 - `GET /api/auth/me`
 - `PUT /api/auth/me`
 - `PUT /api/auth/password`
@@ -294,6 +297,8 @@ Endpoints principales:
 Estado:
 
 - Tests backend existentes para registro, login y refresh.
+- **Seguridad:** Refresh Token manejado exclusivamente vía cookies `httpOnly`.
+- **Logout:** Implementado para limpiar cookies del lado del cliente.
 - Falta ampliar pruebas de sesion expirada y flujos frontend.
 
 ### Vendors
@@ -364,6 +369,8 @@ Estado:
 ### Controles implementados o documentados
 
 - JWT con access token y refresh token.
+- **Refresh Tokens almacenados en cookies `httpOnly`** para mitigar ataques XSS.
+- **Persistencia en Frontend:** Uso de `withCredentials` en Axios para manejo transparente de tokens.
 - Secretos JWT separados.
 - bcrypt para passwords.
 - Validacion con Zod.

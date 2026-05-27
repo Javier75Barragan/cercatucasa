@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 
 import { initializeWebSocket } from './services/websocket';
@@ -47,22 +48,18 @@ initializeWebSocket(httpServer);
 app.use(helmet());
 
 // Configuración de CORS segura y flexible
-const allowedOrigin = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.replace(/\/$/, '') : 'http://localhost:5173';
+const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:5173'];
 
 app.use(cors({
-  origin: [
-    allowedOrigin,
-    'https://cercatucasa.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:3000'
-  ],
+  origin: allowedOrigins,
   credentials: true,
 }));
 
-console.log('🔒 CORS: Seguridad restaurada para:', allowedOrigin);
+console.log('🔒 CORS: Orígenes permitidos:', allowedOrigins.join(', '));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Servir archivos estáticos (uploads)
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));

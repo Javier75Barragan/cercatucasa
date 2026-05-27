@@ -17,7 +17,12 @@ export const errorHandler: ErrorRequestHandler = (
   console.error(`📅 ${new Date().toLocaleString()}`);
   console.error(`🔴 MENSAJE: ${err.message}`);
   if (err.code) console.error(`🆔 CÓDIGO: ${err.code}`);
-  if (err.stack) console.error(`📚 STACK: ${err.stack.split('\n')[1].trim()}`); // Solo la primera línea del stack para no inundar
+  if (err.stack) {
+    const stackLines = err.stack.split('\n');
+    if (stackLines.length > 1) {
+      console.error(`📚 STACK: ${stackLines[1].trim()}`);
+    }
+  }
   console.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
   // Errores de PostgreSQL

@@ -9,6 +9,7 @@ const api: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
   timeout: 10000,
 });
 
@@ -25,19 +26,65 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Flag para evitar múltiples redirects simultáneos al recibir 401
-let isRedirectingToLogin = false;
+// Variables para manejar la renovación del token
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
 
 // Response interceptor para manejar errores
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ApiResponse<unknown>>) => {
-    if (error.response?.status === 401 && !isRedirectingToLogin) {
-      isRedirectingToLogin = true;
-      // Limpiar sesión usando el store directamente
-      useAuthStore.getState().logout();
-      window.location.href = '/login';
+  async (error: AxiosError<ApiResponse<any>>) => {
+    const originalRequest = error.config;
+
+    // Si es un 401 y no es una petición de reintento o de login/refresh
+    if (error.response?.status === 401 && originalRequest && !(originalRequest as any)._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      (originalRequest as any)._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Intentar refrescar el token (el navegador envía la cookie httpOnly automáticamente)
+        const res = await authApi.refresh();
+        const { token } = res.data.data;
+
+        useAuthStore.getState().setToken(token);
+        processQueue(null, token);
+        
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        if (typeof window !== 'undefined') {
+          const logout = useAuthStore.getState().logout;
+          logout();
+          window.location.replace('/login'); // Usamos replace para no ensuciar el historial
+        }
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
     return Promise.reject(error);
   }
 );
@@ -49,6 +96,12 @@ export const authApi = {
 
   register: (data: { email: string; password: string; name: string; phone: string; role?: string }) =>
     api.post('/auth/register', data),
+
+  refresh: () =>
+    api.post('/auth/refresh'),
+
+  logout: () =>
+    api.post('/auth/logout'),
 
   getMe: () =>
     api.get('/auth/me'),

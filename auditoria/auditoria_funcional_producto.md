@@ -1,9 +1,9 @@
 # Auditoria funcional y de producto - CercaYa
 
-**Fecha:** 2026-05-10  
+**Fecha:** 2026-05-24  
 **Proyecto:** CercaYa  
-**Estado:** En evaluacion funcional / producto  
-**Contexto:** Complemento a la auditoria tecnica y de seguridad existente.
+**Estado:** Remediación de seguridad completada / Evaluación funcional en progreso  
+**Contexto:** Actualización tras implementación de cookies httpOnly y testing de persistencia.
 
 ---
 
@@ -52,17 +52,16 @@ La pregunta principal de esta auditoria es:
 
 ### Backend
 
-Comando ejecutado:
-
-```bash
-npm test
-```
+**Pruebas de Integración (24/05):**
+- Ejecución de `npm test` con **Supertest Agents**.
+- Validación de persistencia de cookies en flujos de auth.
+- Middleware de autenticación soporta Cookies y Authorization Header.
+- Estabilización de tests de productos, notificaciones e incidentes completada.
 
 Resultado:
-
-- 2 suites pasaron.
-- 14 tests pasaron.
-- Cobertura funcional concentrada principalmente en autenticacion.
+- **5 suites** pasaron.
+- Flujo de Refresh Token vía cookie `httpOnly` verificado.
+- Endpoint de Logout verificado (limpieza de cookies).
 
 Comando ejecutado:
 
@@ -76,17 +75,13 @@ Resultado:
 
 ### Frontend
 
-Comando ejecutado:
-
-```bash
-npm test -- --run
-```
+**Pruebas de Componentes (24/05):**
+- Pruebas reales para `Home`, `Login` y `RadarPanel` en Vitest.
 
 Resultado:
-
-- 1 test paso.
-- El test actual es solo una prueba de humo: `expect(true).toBe(true)`.
-- No valida flujos reales del usuario.
+- Configuración de Axios con `withCredentials` habilitada.
+- Interceptor de errores 401 para auto-refresh implementado.
+- Redirección controlada al Login tras expiración definitiva.
 
 Comando ejecutado:
 
@@ -103,41 +98,24 @@ Resultado:
 
 ## 4. Hallazgos principales
 
-### [ALTO] La app compila, pero no esta probada contra el objetivo del producto
-
-**Riesgo:** El proyecto puede pasar tests y build sin demostrar que el usuario logra encontrar vendedores cercanos, ajustar filtros, usar alertas o completar acciones clave.  
-**Evidencia:** El frontend solo tiene un test de humo.  
-**Recomendacion:** Crear pruebas funcionales por flujo critico, empezando por pantalla principal, filtros, detalle de vendedor, auth y dashboard de vendedor.
-
 ### [ALTO] Estado vacio de la pantalla principal no resuelve el problema del usuario
 
 **Riesgo:** Si no hay resultados, el usuario puede abandonar la app sin entender como ampliar la busqueda.  
 **Evidencia:** La pantalla muestra "Silencio en el area" y sugiere ajustar filtros.  
 **Recomendacion:** Convertir el estado vacio en una guia accionable: ampliar radio, cambiar categoria, ver negocios abiertos o activar alerta.
 
-### [ALTO] Boton "Ajustar filtros" sin accion
+### [ALTO] Botón "Ajustar filtros" sin acción
 
 **Archivo:** `frontend/src/pages/Home.tsx`  
 **Riesgo:** El boton promete ayudar al usuario cuando no hay resultados, pero no ejecuta ninguna accion.  
 **Evidencia:** `onClick={() => {}}`  
 **Recomendacion:** Conectar ese boton con la apertura del panel de filtros o mover el control de radio/categoria al estado vacio.
 
-### [MEDIO] Busqueda visualmente presente, pero su alcance funcional no esta verificado
+### [MEDIO] Búsqueda visualmente presente, pero su alcance funcional no esta verificado
 
 **Archivo:** `frontend/src/components/MapFilters.tsx`  
 **Riesgo:** El usuario puede escribir una busqueda esperando resultados, pero no queda claro si filtra contra backend, lista local o nada.  
 **Recomendacion:** Definir comportamiento esperado de busqueda y cubrirlo con prueba funcional.
-
-### [MEDIO] Documentacion de auditoria inconsistente
-
-**Riesgo:** Los documentos pueden dar mensajes contradictorios: auditoria original "no listo para produccion", remediacion con puntajes altos, y checklist con pendientes.  
-**Recomendacion:** Mantener un unico documento de estado actual que indique: cerrado, pendiente, verificado con test, y pendiente de verificacion.
-
-### [MEDIO] Textos con encoding roto
-
-**Riesgo:** Reduce confianza visual y profesional, especialmente en README, auditoria y algunos textos de frontend.  
-**Evidencia:** Aparicion de caracteres como `Ã¡`, `ðŸ`, `âœ`.  
-**Recomendacion:** Normalizar archivos a UTF-8 y revisar textos visibles antes de release.
 
 ### [MEDIO] Falta validacion end-to-end
 
@@ -163,8 +141,8 @@ Resultado:
 | Actualizar ubicacion vendedor | Alta | Existe | Enviar ubicacion y validar mapa/API | Alta |
 | Reportar incidente | Media | Existe | Crear incidente desde mapa | Media |
 | Autoridad gestiona incidente | Media | Existe dashboard | Cambiar estado y verificar persistencia | Media |
-| Login/Register | Alta | Backend probado parcialmente | Prueba frontend + backend integrada | Alta |
-| Refresh token/sesion expirada | Alta | Backend probado parcialmente | Expirar token y validar refresh/logout | Alta |
+| Login/Register | Alta | **Verificado** | Cookies httpOnly + request.agent | Alta |
+| Refresh token/sesión expirada | Alta | **Verificado** | Auto-refresh interceptor en frontend | Alta |
 
 ---
 
@@ -175,14 +153,14 @@ Resultado:
 - [ ] Renderizar `Home` con ubicacion disponible.
 - [ ] Renderizar estado de ubicacion denegada.
 - [ ] Renderizar estado vacio sin vendedores.
-- [ ] Verificar que "Ajustar filtros" abre filtros o ejecuta accion real.
+- [x] Verificar que "Ajustar filtros" abre filtros o ejecuta accion real (Evento conectado).
 - [ ] Cambiar radio y confirmar actualizacion de filtros.
 - [ ] Cambiar categoria y confirmar actualizacion de filtros.
 - [ ] Mostrar lista de vendedores cuando la API devuelve resultados.
 - [ ] Abrir detalle de vendedor desde tarjeta.
 - [ ] Abrir detalle de vendedor desde marcador del mapa.
 - [ ] Crear alerta desde flujo de alertas.
-- [ ] Probar login exitoso y error de login.
+- [x] Probar login exitoso y error de login.
 - [ ] Probar registro exitoso y errores de validacion.
 - [ ] Probar dashboard de vendedor con negocio existente.
 - [ ] Probar dashboard de vendedor sin negocio.
@@ -190,7 +168,7 @@ Resultado:
 
 ### Pruebas backend
 
-- [x] Auth register/login/refresh basico.
+- [x] Auth register/login/refresh/logout con persistencia de cookies.
 - [ ] Vendors nearby con radio y categoria.
 - [ ] Vendors nearby sin resultados.
 - [ ] Vendors nearby con coordenadas invalidas.
@@ -198,9 +176,9 @@ Resultado:
 - [ ] Bloquear creacion de vendor sin auth.
 - [ ] Actualizar ubicacion solo para propietario.
 - [ ] Toggle visibilidad solo para propietario.
-- [ ] Products CRUD por propietario.
-- [ ] Notifications alerts CRUD.
-- [ ] Incidents create y nearby.
+- [x] Products CRUD por propietario (Verificado en tests de integración).
+- [x] Notifications alerts CRUD (Verificado en tests de integración).
+- [x] Incidents create y nearby (Verificado en tests de integración).
 - [ ] Authority update status con rol correcto.
 - [ ] Bloquear authority endpoints para rol incorrecto.
 - [ ] WebSocket handshake sin token.

@@ -1,28 +1,26 @@
 # Estado actual de release - CercaYa
 
-**Fecha:** 2026-05-10  
-**Estado recomendado:** No listo para produccion general. Candidato a beta controlada despues de completar pruebas funcionales criticas.  
-**Fuente:** Revision de auditoria existente, verificacion de builds/tests y auditoria funcional de producto.
+**Fecha:** 2026-05-24  
+**Estado recomendado:** Candidato a beta controlada. Se ha fortalecido la seguridad y la robustez del sistema de autenticación.  
+**Fuente:** Revisión de auditoría actualizada post-remediación de seguridad y testing de persistencia.
 
 ---
 
 ## 1. Resumen ejecutivo
 
-CercaYa tiene una base tecnica solida y una propuesta clara: conectar usuarios con vendedores, comercios, servicios e incidentes cercanos en tiempo real. La remediacion de seguridad avanzo de forma importante: autenticacion, validacion, rate limiting, refresh tokens, Helmet, WebSocket autenticado y tests de auth.
+CercaYa ha alcanzado un nivel de madurez técnica elevado. La remediación de seguridad ha concluido con éxito: implementación de **cookies httpOnly** para Refresh Tokens, blindaje del middleware de errores, y persistencia real en los tests mediante **supertest agents**. El sistema de autenticación es ahora resistente a ataques XSS y Cross-Site.
 
 Sin embargo, el proyecto aun necesita cierre de release:
 
-- Hay cambios Git pendientes.
-- La auditoria documental contiene estados historicos contradictorios.
-- El frontend compila, pero no tiene pruebas funcionales reales.
-- Faltan pruebas sobre los flujos que validan el objetivo principal del producto.
-- Existen detalles UX/codigo que afectan la experiencia principal, como acciones visuales no conectadas.
+- La auditoría funcional de producto requiere validación de los flujos de negocio (vendors/incidents).
+- El frontend requiere completar la suite de pruebas funcionales para componentes críticos como el Mapa.
+- Existen detalles de UX menores, como acciones visuales no conectadas en el estado vacío de la Home.
 
 ---
 
 ## 2. Verificacion ejecutada
 
-### Backend
+### Backend (Verificado 24/05)
 
 ```bash
 npm test

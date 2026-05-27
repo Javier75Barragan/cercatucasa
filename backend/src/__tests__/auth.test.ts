@@ -57,6 +57,9 @@ app.set('trust proxy', 1);
 app.use('/api/auth', authRoutes);
 app.use(errorHandler);
 
+// Creamos el agente para mantener persistencia de cookies entre peticiones
+const agent = request.agent(app);
+
 // ─── Datos de prueba ──────────────────────────────────────────────────────────
 
 const mockUser = {
@@ -90,19 +93,22 @@ describe('POST /api/auth/register', () => {
       .mockResolvedValueOnce({ rows: [{ ...mockUser, email: validPayload.email }], rowCount: 1 } as any)
       .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any); // insert refresh token
 
-    const res = await request(app).post('/api/auth/register').send(validPayload);
+    const res = await agent.post('/api/auth/register').send(validPayload);
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
     expect(res.body.data).toHaveProperty('token');
-    expect(res.body.data).toHaveProperty('refreshToken');
+    
+    // Verificamos que el refreshToken ya no venga en el body, sino en la cookie
+    expect(res.body.data).not.toHaveProperty('refreshToken');
+    expect(res.get('Set-Cookie')).toBeDefined();
     expect(res.body.data.user).not.toHaveProperty('password');
   });
 
   it('debe devolver 409 si el email ya está registrado', async () => {
     mockQuery.mockRejectedValueOnce({ code: '23505' });
 
-    const res = await request(app).post('/api/auth/register').send(validPayload);
+    const res = await agent.post('/api/auth/register').send(validPayload);
 
     expect(res.status).toBe(409);
     expect(res.body.success).toBe(false);
@@ -111,14 +117,14 @@ describe('POST /api/auth/register', () => {
 
   it('debe devolver 400 si falta el campo email', async () => {
     const { email: _email, ...withoutEmail } = validPayload;
-    const res = await request(app).post('/api/auth/register').send(withoutEmail);
+    const res = await agent.post('/api/auth/register').send(withoutEmail);
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
   });
 
   it('debe devolver 400 si la contraseña es muy corta', async () => {
-    const res = await request(app)
+    const res = await agent
       .post('/api/auth/register')
       .send({ ...validPayload, password: '123' });
 
@@ -127,7 +133,7 @@ describe('POST /api/auth/register', () => {
   });
 
   it('debe devolver 400 si el email no tiene formato válido', async () => {
-    const res = await request(app)
+    const res = await agent
       .post('/api/auth/register')
       .send({ ...validPayload, email: 'no-es-un-email' });
 
@@ -147,14 +153,16 @@ describe('POST /api/auth/login', () => {
       .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any); // insert refresh token
     (mockBcryptCompare as jest.Mock).mockResolvedValueOnce(true);
 
-    const res = await request(app)
+    const res = await agent
       .post('/api/auth/login')
       .send({ email: mockUser.email, password: 'CorrectPassword123!' });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data).toHaveProperty('token');
-    expect(res.body.data).toHaveProperty('refreshToken');
+    
+    // El refreshToken debe estar en las cookies
+    expect(res.get('Set-Cookie')).toBeDefined();
     expect(res.body.data.user).not.toHaveProperty('password');
     expect(res.body.message).toMatch(/login exitoso/i);
   });
@@ -162,7 +170,7 @@ describe('POST /api/auth/login', () => {
   it('debe devolver 401 si el usuario no existe', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const res = await request(app)
+    const res = await agent
       .post('/api/auth/login')
       .send({ email: 'noexiste@example.com', password: 'AnyPassword123!' });
 
@@ -175,7 +183,7 @@ describe('POST /api/auth/login', () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ ...mockUser, password: '$2b$10$hashedpassword' }], rowCount: 1 } as any);
     (mockBcryptCompare as jest.Mock).mockResolvedValueOnce(false);
 
-    const res = await request(app)
+    const res = await agent
       .post('/api/auth/login')
       .send({ email: mockUser.email, password: 'WrongPassword!' });
 
@@ -187,7 +195,7 @@ describe('POST /api/auth/login', () => {
   it('debe devolver 401 si el usuario está desactivado', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ ...mockUser, is_active: false, password: '$2b$10$hashedpassword' }], rowCount: 1 } as any);
 
-    const res = await request(app)
+    const res = await agent
       .post('/api/auth/login')
       .send({ email: mockUser.email, password: 'AnyPassword123!' });
 
@@ -197,7 +205,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('debe devolver 400 si falta el campo password', async () => {
-    const res = await request(app)
+    const res = await agent
       .post('/api/auth/login')
       .send({ email: mockUser.email });
 
@@ -211,23 +219,15 @@ describe('POST /api/auth/refresh', () => {
     jest.clearAllMocks();
   });
 
-  it('debe devolver 400 si no se envía refreshToken', async () => {
-    const res = await request(app).post('/api/auth/refresh').send({});
-
-    expect(res.status).toBe(400);
-    expect(res.body.success).toBe(false);
-  });
-
-  it('debe devolver 401 si el refreshToken no existe en BD', async () => {
+  it('debe devolver 401 si no hay cookie de refresh token', async () => {
+    // Creamos un agente nuevo sin cookies para este test
+    const freshAgent = request.agent(app);
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-    const res = await request(app)
-      .post('/api/auth/refresh')
-      .send({ refreshToken: 'token-invalido-que-no-existe' });
+    const res = await freshAgent.post('/api/auth/refresh');
 
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);
-    expect(res.body.error).toMatch(/refresh token inválido/i);
   });
 
   it('no debe exponer el password en ninguna respuesta de auth', async () => {
@@ -236,13 +236,29 @@ describe('POST /api/auth/refresh', () => {
       .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
     (mockBcryptCompare as jest.Mock).mockResolvedValueOnce(true);
 
-    const res = await request(app)
+    const res = await agent
       .post('/api/auth/login')
       .send({ email: mockUser.email, password: 'CorrectPassword123!' });
 
     expect(res.status).toBe(200);
     expect(JSON.stringify(res.body)).not.toContain('$2b$10$');
     expect(res.body.data?.user?.password).toBeUndefined();
+  });
+});
+
+describe('POST /api/auth/logout', () => {
+  it('debe limpiar las cookies de autenticación (200)', async () => {
+    const res = await agent.post('/api/auth/logout');
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toMatch(/sesión cerrada/i);
+
+    // Verificar que se envían instrucciones para borrar las cookies
+    const cookies = res.get('Set-Cookie');
+    expect(cookies).toBeDefined();
+    expect(cookies.some(c => c.includes('token=;'))).toBe(true);
+    expect(cookies.some(c => c.includes('refreshToken=;'))).toBe(true);
   });
 });
 
@@ -255,7 +271,7 @@ describe('GET /api/auth/me', () => {
     mockQuery.mockResolvedValueOnce({ rows: [mockUser], rowCount: 1 } as any);
 
     const token = generateToken({ userId: mockUser.id, email: mockUser.email, role: mockUser.role });
-    const res = await request(app)
+    const res = await agent
       .get('/api/auth/me')
       .set('Authorization', `Bearer ${token}`);
 

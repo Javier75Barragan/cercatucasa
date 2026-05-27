@@ -49,9 +49,11 @@ export const authenticate = (
   next: NextFunction
 ): void => {
   try {
+    // Intentar obtener el token del header Authorization o de las cookies
     const authHeader = req.headers.authorization;
+    const cookieToken = (req as any).cookies?.token;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if ((!authHeader || !authHeader.startsWith('Bearer ')) && !cookieToken) {
       res.status(401).json({
         success: false,
         error: 'No se proporcionó token de autenticación',
@@ -59,7 +61,7 @@ export const authenticate = (
       return;
     }
 
-    const token = authHeader.substring(7);
+    const token = authHeader ? authHeader.substring(7) : cookieToken;
     const decoded = verifyToken(token);
     req.user = decoded;
     next();
@@ -102,8 +104,10 @@ export const optionalAuth = (
 ): void => {
   try {
     const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
+    const cookieToken = (req as any).cookies?.token;
+
+    if ((authHeader && authHeader.startsWith('Bearer ')) || cookieToken) {
+      const token = authHeader ? authHeader.substring(7) : cookieToken;
       const decoded = verifyToken(token);
       req.user = decoded;
     }

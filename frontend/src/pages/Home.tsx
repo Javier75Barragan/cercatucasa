@@ -190,11 +190,13 @@ const Home = () => {
               <button 
                 onClick={() => {
                   setFilters({ radius: filters.radius + 500 });
-                  // No need to dispatch event if we just want to update filters
+                  // También disparamos el evento para que el usuario vea que puede ajustar más cosas
+                  window.dispatchEvent(new CustomEvent('toggle-filters'));
                 }} 
-                className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold transition-all shadow-glow-sm active:scale-95"
+                className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold transition-all shadow-glow-sm active:scale-95 flex items-center gap-2"
               >
-                Expandir búsqueda (+500m)
+                <Radio className="w-3 h-3" />
+                Expandir y ajustar filtros
               </button>
             </div>
           )}

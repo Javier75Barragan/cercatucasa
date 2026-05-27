@@ -1,6 +1,7 @@
 import request from 'supertest';
 import express, { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
 
 // Configurar variables de entorno antes de importar los middlewares
 process.env.JWT_SECRET = 'test-secret-key-for-testing-purposes-only-32chars';
@@ -69,6 +70,7 @@ describe('Middleware de Autenticación y Tokens (auth.ts)', () => {
 
     beforeEach(() => {
       app = express();
+      app.use(cookieParser());
       app.use(express.json());
       app.get('/protected', authenticate, (req: Request, res: Response) => {
         res.status(200).json({ success: true, user: req.user });
@@ -83,6 +85,18 @@ describe('Middleware de Autenticación y Tokens (auth.ts)', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+      expect(res.body.user.userId).toBe(payload.userId);
+    });
+
+    it('debe permitir el paso si se proporciona un token válido en una cookie', async () => {
+      const token = generateToken(payload);
+      const res = await request(app)
+        .get('/protected')
+        .set('Cookie', [`token=${token}`]); // Simula el token viniendo en cookie
+
+      // Nota: Para que este test pase, tu middleware 'authenticate' debe ser
+      // actualizado para revisar req.cookies.token además de Authorization header.
+      expect(res.status).toBe(200);
       expect(res.body.user.userId).toBe(payload.userId);
     });
 
@@ -203,6 +217,7 @@ describe('Middleware de Autenticación y Tokens (auth.ts)', () => {
 
     beforeEach(() => {
       app = express();
+      app.use(cookieParser());
       app.use(express.json());
       app.get('/optional', optionalAuth, (req: Request, res: Response) => {
         res.status(200).json({ success: true, user: req.user });

@@ -164,7 +164,10 @@ describe('GET /api/notifications/alerts', () => {
       .get('/api/notifications/alerts')
       .set('Authorization', `Bearer ${token}`);
 
-    expect(new Date(res.body.data[0].created_at).getTime()).toBeGreaterThan(new Date(res.body.data[1].created_at).getTime());
+    expect(res.body.data.length).toBe(2);
+    const date1 = new Date(res.body.data[0].created_at).getTime();
+    const date2 = new Date(res.body.data[1].created_at).getTime();
+    expect(date1).toBeGreaterThan(date2);
   });
 });
 

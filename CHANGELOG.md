@@ -4,6 +4,22 @@ Todas las modificaciones notables realizadas a este proyecto serán documentadas
 
 ## [24/05/2026] - Mantenimiento de dependencias y auditoría npm
 
+### Seguridad y Hardening
+- **Mejora:** Implementación de **Refresh Tokens en cookies `httpOnly`**. El token de refresco ya no se expone en el cuerpo de la respuesta JSON, mitigando riesgos de robo de tokens mediante scripts maliciosos (XSS).
+- **Añadido:** Dependencia `cookie-parser` para el manejo seguro de cookies en el backend.
+- **Añadido:** Endpoint de **Logout** para limpiar de forma segura las cookies `token` y `refreshToken`.
+- **Frontend:** Configuración de Axios con `withCredentials: true` para soportar el nuevo flujo de autenticación basado en cookies.
+- **Robustez:** Mejora en el manejador de errores global para prevenir fallos al registrar trazas de error.
+- **CORS:** Refactorización de orígenes permitidos para usar listas dinámicas desde variables de entorno.
+- **Mejora:** Actualización del middleware `authenticate` para soportar la lectura de tokens tanto desde el encabezado `Authorization` como desde cookies seguras.
+- **Corregido:** Estabilización de los esquemas de validación Zod en el backend; se sincronizaron los slugs de categorías en los tests (de español a inglés técnico como `groceries`).
+- **Corregido:** Ajuste en las comparaciones de fechas en los tests de integración (`incidents`, `notifications`, `products`) para soportar comparaciones `toBeGreaterThanOrEqual`, evitando fallos por precisión de milisegundos.
+- **Corregido:** Limpieza de la redirección en el frontend (`api.ts`) usando `window.location.replace` para evitar bucles en el historial de navegación tras la expiración del token.
+
+### Testing
+- **Mejora:** Migración de la suite de pruebas de integración (`supertest`) al uso de **`request.agent(app)`**. Esto permite mantener la persistencia de la sesión y las cookies entre múltiples peticiones dentro de un mismo test, simulando mejor el comportamiento de un cliente real.
+- **Actualizado:** Refactorización de `auth.test.ts` y `products.test.ts` para validar la presencia de cookies en lugar de tokens en el body.
+
 ### Seguridad y mantenimiento
 - **Verificado:** El repositorio no tenía cambios pendientes sin commit al momento de la revisión. La actualización mobile-first del `17/05` ya estaba resguardada en el commit `ae26059`.
 - **Actualizado:** Dependencias de mantenimiento en `frontend` y `backend`, incluyendo `@typescript-eslint/eslint-plugin` y `@typescript-eslint/parser` a la línea `8.x`, con regeneración de `package-lock.json` en ambos proyectos.
