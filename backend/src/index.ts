@@ -10,6 +10,22 @@ import path from 'path';
 import { initializeWebSocket } from './services/websocket';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
+import * as Sentry from '@sentry/node';
+import rateLimit from 'express-rate-limit';
+import winston from 'winston';
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    }),
+  ],
+});
 
 // Configuración
 import { initDB } from './config/database';
@@ -41,11 +57,26 @@ if (process.env.JWT_SECRET.length < 32) {
 const app: Application = express();
 const httpServer = createServer(app);
 
+// Sentry Init (v8+ API)
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  tracesSampleRate: 1.0,
+});
+
 // Inicializar WebSocket
 initializeWebSocket(httpServer);
 
 // Middleware
 app.use(helmet());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Límite de 100 requests por IP por ventana
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
 
 // Configuración de CORS segura y flexible
 const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:5173'];
@@ -59,7 +90,7 @@ console.log('🔒 CORS: Orígenes permitidos:', allowedOrigins.join(', '));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieParser() as any);
 
 // Servir archivos estáticos (uploads)
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -86,6 +117,9 @@ app.use('/api/upload', uploadRoutes);
 
 // Documentación
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Sentry error handler (v8+ API — debe ir antes del error handler propio)
+Sentry.setupExpressErrorHandler(app);
 
 // 404
 app.use(notFoundHandler);

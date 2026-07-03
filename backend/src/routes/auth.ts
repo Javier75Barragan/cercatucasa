@@ -330,6 +330,46 @@ router.post(
 
 /**
  * @openapi
+ * /api/auth/logout:
+ *   post:
+ *     tags:
+ *       - Autenticación
+ *     summary: Cerrar sesión
+ *     description: Invalida el refresh token del usuario y limpia la cookie de sesión.
+ *     responses:
+ *       200:
+ *         description: Sesión cerrada correctamente
+ */
+// Logout — Invalida el refresh token en BD y limpia cookie
+router.post(
+  '/logout',
+  asyncHandler(async (req, res) => {
+    // Acepta refreshToken del body o de la cookie (compatibilidad frontend/backend)
+    const tokenFromBody = req.body?.refreshToken;
+    const tokenFromCookie = req.cookies?.refreshToken;
+    const refreshToken = tokenFromBody || tokenFromCookie;
+
+    if (refreshToken) {
+      // Eliminar el refresh token de la BD para invalidarlo
+      await query(`DELETE FROM refresh_tokens WHERE token = $1`, [refreshToken]);
+    }
+
+    // Limpiar cookie si existe
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    res.json({
+      success: true,
+      message: 'Sesión cerrada exitosamente',
+    });
+  })
+);
+
+/**
+ * @openapi
  * /api/auth/me:
  *   get:
  *     tags:

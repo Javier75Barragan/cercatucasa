@@ -142,11 +142,26 @@ router.get(
 
     const latitude = parseFloat(lat as string);
     const longitude = parseFloat(lng as string);
-    const radiusMeters = parseInt(radius as string);
+    // Fix DoS: limitar el radio máximo a 50km para evitar queries masivos
+    const MAX_RADIUS_METERS = 50000;
+    const rawRadius = parseInt(radius as string);
+    const radiusMeters = Math.min(isNaN(rawRadius) ? 200 : rawRadius, MAX_RADIUS_METERS);
 
-    // Fórmula de Haversine para calcular distancia
-    // Convierte radio a grados aproximados (1 grado ≈ 111km)
-    const radiusDegrees = radiusMeters / 111000;
+    if (isNaN(latitude) || isNaN(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      res.status(400).json({ success: false, error: 'Coordenadas inválidas' });
+      return;
+    }
+
+    // Fix bounding box: la longitud necesita ajuste por latitud
+    // 1 grado de latitud ≈ 111km siempre
+    // 1 grado de longitud ≈ 111km * cos(lat)
+    const radiusLatDeg = radiusMeters / 111000;
+    const radiusLngDeg = radiusMeters / (111000 * Math.cos((latitude * Math.PI) / 180));
+
+    // Paginación
+    const page = Math.max(1, parseInt((req.query.page as string) || '1'));
+    const limit = Math.min(50, Math.max(1, parseInt((req.query.limit as string) || '20')));
+    const offset = (page - 1) * limit;
 
     let sql = `
       SELECT * FROM (
@@ -157,20 +172,22 @@ router.get(
           vl.accuracy,
           vl.is_active as location_active,
           (6371000 * acos(
-            cos(radians($1)) * cos(radians(vl.latitude)) *
-            cos(radians(vl.longitude) - radians($2)) +
-            sin(radians($1)) * sin(radians(vl.latitude))
+            LEAST(1.0, GREATEST(-1.0,
+              cos(radians($1)) * cos(radians(vl.latitude)) *
+              cos(radians(vl.longitude) - radians($2)) +
+              sin(radians($1)) * sin(radians(vl.latitude))
+            ))
           )) as distance_meters
         FROM vendors v
         JOIN vendor_locations vl ON v.id = vl.vendor_id
         WHERE vl.is_active = true
           AND v.is_active = true
-          AND vl.latitude BETWEEN $1 - $4 AND $1 + $4
-          AND vl.longitude BETWEEN $2 - $4 AND $2 + $4
+          AND vl.latitude  BETWEEN $1 - $4 AND $1 + $4
+          AND vl.longitude BETWEEN $2 - $5 AND $2 + $5
     `;
 
-    const params: any[] = [latitude, longitude, radiusMeters, radiusDegrees];
-    let paramIndex = 5;
+    const params: any[] = [latitude, longitude, radiusMeters, radiusLatDeg, radiusLngDeg];
+    let paramIndex = 6;
 
     if (category) {
       sql += ` AND v.category = $${paramIndex}`;
@@ -188,13 +205,17 @@ router.get(
       ) AS nearby_vendors
       WHERE distance_meters <= $3
       ORDER BY distance_meters ASC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
+    params.push(limit, offset);
 
     const result = await query(sql, params);
 
     const response: ApiResponse<typeof result.rows> = {
       success: true,
       data: result.rows,
+      // @ts-ignore - campo extra de paginación
+      pagination: { page, limit, count: result.rows.length },
     };
 
     res.json(response);
