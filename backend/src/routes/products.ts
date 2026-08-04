@@ -8,6 +8,71 @@ import { ApiResponse, Product } from '../types';
 
 const router = Router();
 
+/**
+ * @openapi
+ * /api/products:
+ *   post:
+ *     tags:
+ *       - Productos
+ *     summary: Crear un producto
+ *     description: Crea un nuevo producto asociado a un vendedor. Solo vendedores (dueños) y admins.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - vendor_id
+ *               - name
+ *               - category
+ *             properties:
+ *               vendor_id:
+ *                 type: string
+ *                 format: uuid
+ *                 example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *               name:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *                 example: "Hamburguesa Clásica"
+ *               description:
+ *                 type: string
+ *                 maxLength: 1000
+ *                 example: "Hamburguesa con carne, lechuga, tomate y queso"
+ *               price:
+ *                 type: number
+ *                 minimum: 0
+ *                 example: 8.50
+ *               currency:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 3
+ *                 default: "USD"
+ *                 example: "USD"
+ *               photos:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uri
+ *                 example: ["https://example.com/photo1.jpg"]
+ *               category:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 100
+ *                 example: "fast_food"
+ *     responses:
+ *       201:
+ *         description: Producto creado exitosamente
+ *       400:
+ *         description: Datos de entrada inválidos
+ *       403:
+ *         description: No tienes permisos para agregar productos a este vendedor
+ *       401:
+ *         description: No autorizado
+ */
 // Crear producto
 router.post(
   '/',
@@ -50,6 +115,33 @@ router.post(
   })
 );
 
+/**
+ * @openapi
+ * /api/products/vendor/{vendorId}:
+ *   get:
+ *     tags:
+ *       - Productos
+ *     summary: Listar productos de un vendedor
+ *     description: Obtiene todos los productos asociados a un vendedor específico. Ruta pública.
+ *     parameters:
+ *       - in: path
+ *         name: vendorId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID del vendedor
+ *       - in: query
+ *         name: available_only
+ *         schema:
+ *           type: string
+ *           enum: ["true", "false"]
+ *           default: "true"
+ *         description: Si es "true", solo devuelve productos disponibles
+ *     responses:
+ *       200:
+ *         description: Lista de productos del vendedor
+ */
 // Listar productos de un vendedor
 router.get(
   '/vendor/:vendorId',
@@ -77,6 +169,64 @@ router.get(
   })
 );
 
+/**
+ * @openapi
+ * /api/products/{id}:
+ *   put:
+ *     tags:
+ *       - Productos
+ *     summary: Actualizar un producto
+ *     description: Actualiza los campos de un producto existente. Solo el vendedor dueño o admin.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID del producto
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *               description:
+ *                 type: string
+ *                 maxLength: 1000
+ *               price:
+ *                 type: number
+ *                 minimum: 0
+ *               currency:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 3
+ *               photos:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uri
+ *               category:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 100
+ *               is_available:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Producto actualizado exitosamente
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: No tienes permisos para editar este producto
+ */
 // Actualizar producto
 router.put(
   '/:id',
@@ -131,6 +281,32 @@ router.put(
   })
 );
 
+/**
+ * @openapi
+ * /api/products/{id}:
+ *   delete:
+ *     tags:
+ *       - Productos
+ *     summary: Eliminar un producto
+ *     description: Elimina permanentemente un producto. Solo el vendedor dueño o admin.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID del producto a eliminar
+ *     responses:
+ *       200:
+ *         description: Producto eliminado exitosamente
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: No tienes permisos para eliminar este producto
+ */
 // Eliminar producto (soft delete marcando como no disponible)
 router.delete(
   '/:id',

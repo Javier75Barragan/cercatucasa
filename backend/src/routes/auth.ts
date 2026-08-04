@@ -63,7 +63,7 @@ const authLimiter = rateLimit({
  *                 enum: [customer, vendor]
  *                 default: customer
  *     responses:
- *       21:
+ *       201:
  *         description: Usuario creado exitosamente
  *       409:
  *         description: El email ya está registrado
