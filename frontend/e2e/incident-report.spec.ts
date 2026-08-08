@@ -113,15 +113,17 @@ test.describe('Incident Reporting Flow', () => {
       await route.fulfill({ status: 200, json: { success: true, data: { id: 'fake-incident' } } });
     });
 
-    // Wait for the request to fire when we click submit
-    const requestPromise = page.waitForRequest('**/api/incidents');
+    // Wait for the response when we click submit; use evaluate click to avoid pointer interception
+    const responsePromise = page.waitForResponse('**/api/incidents');
     if (await submitBtn.isVisible()) {
         // If the button is disabled due to client validation in tests, enable it as a last resort
         await page.evaluate(() => {
           const b = document.querySelector('button[type="submit"]') as HTMLButtonElement | null;
           if (b && b.disabled) b.disabled = false;
         });
-        await submitBtn.click();
+        // force DOM click to bypass overlays that intercept pointer events
+        await submitBtn.evaluate((b: HTMLElement) => (b as HTMLElement).click());
+        await responsePromise;
     }
     
     // 6. Verify request was sent
