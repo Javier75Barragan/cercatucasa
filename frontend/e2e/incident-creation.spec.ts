@@ -8,7 +8,7 @@ test.describe('Incident Creation', () => {
 
   test('User can create an incident report', async ({ page }) => {
     // Mock incident types
-    await page.route('http://localhost:3000/api/incidents/types', async (route) => {
+    await page.route('**/api/incidents/types', async (route) => {
       await route.fulfill({
         json: {
           success: true,
@@ -20,18 +20,13 @@ test.describe('Incident Creation', () => {
       });
     });
 
-    // Mock incident creation
-    await page.route('http://localhost:3000/api/incidents', async (route) => {
-      await route.fulfill({
-        json: {
-          success: true,
-          data: {
-            id: 'incident-1',
-            type: 'accident',
-            name: 'Juan Perez'
-          }
-        }
-      });
+    // Mock incident creation (POST) and provide a GET fallback
+    await page.route('**/api/incidents', async (route, request) => {
+      if (request.method() === 'POST') {
+        await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ success: true, data: { id: 'incident-1', type: 'accident', name: 'Juan Perez' } }) });
+      } else {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
+      }
     });
 
     // Mock vendors API to prevent home page from hanging
@@ -75,9 +70,14 @@ test.describe('Incident Creation', () => {
       const b = document.querySelector('button[type="submit"]') as HTMLButtonElement | null;
       if (b && b.disabled) b.disabled = false;
     });
-    await submitBtn.evaluate((b: HTMLElement) => (b as HTMLElement).click());
 
-    // Wait for modal to close (heading should disappear)
-    await expect(modalHeading).toBeHidden();
+    // Click and wait for the POST request to /api/incidents to ensure the app processed the submission
+    await Promise.all([
+      page.waitForRequest(req => req.url().includes('/api/incidents') && req.method() === 'POST', { timeout: 10000 }),
+      submitBtn.evaluate((b: HTMLElement) => (b as HTMLElement).click())
+    ]);
+
+    // After backend acknowledgement, wait for modal to close (longer timeout for safety)
+    await expect(modalHeading).toBeHidden({ timeout: 15000 });
   });
 });

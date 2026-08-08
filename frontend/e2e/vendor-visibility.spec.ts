@@ -71,32 +71,29 @@ test.describe('Vendor Visibility Flow', () => {
       await expect(vendorName).toBeVisible();
     }
 
-    // 4. Mock the toggle endpoint before clicking
-    let toggleCalled = false;
+    // 4. Mock the toggle endpoint before clicking and wait for the request
     await page.route('**/api/vendors/*/location/toggle', async route => {
-      toggleCalled = true;
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          isActive: true, // Now it's active
-          location: { type: 'Point', coordinates: [-74.0817, 4.6097] }
-        })
-      });
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isActive: true, location: { type: 'Point', coordinates: [-74.0817, 4.6097] } }) });
     });
 
     // 5. Find the toggle button
     const toggleButton = page.locator('button').filter({ hasText: /TRANSMITIR AHORA|DETENER SEÑAL/i }).first();
-    if (await toggleButton.isVisible()) {
-        await toggleButton.click();
+    if (await toggleButton.count() === 0) {
+      // fallback to any visible switch-like control
+      const alt = page.locator('button[role="switch"]');
+      await expect(alt.first()).toBeVisible();
+      await Promise.all([
+        page.waitForRequest(req => req.url().includes('/location/toggle') && req.method() === 'POST', { timeout: 10000 }),
+        alt.first().click()
+      ]);
     } else {
-        await page.locator('button[role="switch"]').click().catch(() => {});
+      await Promise.all([
+        page.waitForRequest(req => req.url().includes('/location/toggle') && req.method() === 'POST', { timeout: 10000 }),
+        toggleButton.click()
+      ]);
     }
 
-    // Give it a moment to process the mock response
-    await page.waitForTimeout(500);
-    
-    // Assert that the network request was made
-    expect(toggleCalled).toBe(true);
+    // Assert that the toggle request was made by checking for a short-lived POST request
+    // (waitForRequest above will timeout the test if it never happens)
   });
 });
