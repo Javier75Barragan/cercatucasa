@@ -37,6 +37,20 @@ Todas las modificaciones notables realizadas a este proyecto serán documentadas
 - **Verificado:** `frontend` mantiene en verde las pruebas tocadas de `Home`, `Login` y `RadarPanel`.
 - **Observado:** `frontend npm run build` sigue presentando un problema de resolución/acceso a `vite.config.ts` desde `esbuild`; no se considera resuelto en esta sesión.
 
+## [08/08/2026] - Corrección y estabilización de pruebas E2E (Playwright)
+
+### Testing / E2E
+- **Corrección:** Ajustes en selectores y flujos de las pruebas E2E para alinear con la UI mobile-first (placeholders, textos de botones, rutas de dashboard). Archivos modificados: `frontend/e2e/user-login.spec.ts`, `frontend/e2e/incident-creation.spec.ts`, `frontend/e2e/incident-report.spec.ts`, `frontend/e2e/user-finds-nearby-vendor.spec.ts`, `frontend/e2e/vendor-visibility.spec.ts`.
+- **Mejora:** Se añadieron mocks locales para `http://localhost:3000/api/auth/refresh` y permisos de geolocalización en los tests que los requieren.
+- **Acción:** Se instaló `@playwright/test` (devDependency) y navegadores mediante `npx playwright install` en el entorno `frontend` para ejecutar la suite E2E localmente.
+- **Ejecución:** Se ejecutó la suite completa de Playwright localmente: 21 tests ejecutados — 10 pasaron y 11 fallaron. Los fallos requieren afinado adicional en botones flotantes/visibilidad mobile y mocks de endpoints de incidentes.
+- **Repositorio:** Se creó la rama `mobile-first-17may-20260521173808` y un Pull Request para revisión: https://github.com/Javier75Barragan/cercatucasa/pull/1
+
+### Siguientes pasos recomendados
+- Añadir mocks o endpoints de prueba para `POST /api/incidents` en los tests de reporting para evitar timeouts al enviar reportes.
+- Revisar selectores mobile-only y considerar `click({ force: true })` con precaución; preferir localizar elementos por roles/labels estables.
+- Re-ejecutar la suite E2E tras las correcciones hasta reducir fallos a 0 en CI antes de mergear.
+
 ## [17/05/2026] - Actualización visual mobile-first de CercaYa
 
 ### Frontend / UX

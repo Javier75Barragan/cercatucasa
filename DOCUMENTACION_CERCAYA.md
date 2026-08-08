@@ -194,6 +194,38 @@ CercaYa/
   backend/
     src/
       config/
+      
+## 7. Playwright E2E — Actualización 2026-08-08
+
+Se añadieron y ajustaron pruebas E2E con Playwright para alinear la suite con la versión "mobile-first" de la interfaz. Resumen de acciones realizadas:
+
+- Se modificaron selectores y textos en las siguientes pruebas para reflejar placeholders y botones actuales:
+   - `frontend/e2e/user-login.spec.ts`
+   - `frontend/e2e/incident-creation.spec.ts`
+   - `frontend/e2e/incident-report.spec.ts`
+   - `frontend/e2e/user-finds-nearby-vendor.spec.ts`
+   - `frontend/e2e/vendor-visibility.spec.ts`
+
+- Se añadieron permisos de geolocalización (`page.context().grantPermissions(['geolocation'])`) y coordenadas fijas para tests dependientes de ubicación.
+- Se añadió un mock local de `http://localhost:3000/api/auth/refresh` en los tests que requieren flujo de refresh token para evitar bloqueos en los interceptores de axios.
+- Se instaló y configuró `@playwright/test` en `frontend` y se ejecutó `npx playwright install` para descargar navegadores.
+
+Ejecución local realizada:
+
+```bash
+cd frontend
+npx playwright test --reporter=list
+```
+
+Resultado (local): 21 tests ejecutados — 10 pasaron, 11 fallaron. Los fallos están documentados en `frontend/test-results/` y requieren:
+
+- Añadir mocks para `POST /api/incidents` y otros endpoints de backend usados por forms cuya carga queda deshabilitada en el entorno de test.
+- Revisar elementos flotantes (floating buttons) que pueden estar ocultos en viewport de escritorio; adaptar clicks con `force` o usar localizadores por `title`/`aria-label` o `role`.
+
+Se creó un Pull Request con los cambios: https://github.com/Javier75Barragan/cercatucasa/pull/1
+
+Si querés, puedo seguir corrigiendo los tests fallidos en esta rama o crear pruebas nuevas que cubran los casos detectados.
+
       middleware/
       routes/
       schemas/
