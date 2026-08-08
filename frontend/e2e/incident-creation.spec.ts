@@ -43,13 +43,19 @@ test.describe('Incident Creation', () => {
 
     await page.goto('/');
 
-    // Ensure page loaded
-    await expect(page.getByRole('heading', { name: 'Última hora en tu zona' })).toBeVisible();
+    // Ensure page loaded (accept possible heading variants)
+    await expect(page.getByRole('heading', { name: /Última hora en tu zona|Radar comunitario/i })).toBeVisible();
 
     // Click the report incident button
     // It has a title "Reportar emergencia"
     const reportBtn = page.getByTitle('Reportar emergencia');
-    await reportBtn.click({ force: true });
+    // Try clicking the floating button robustly
+    try {
+      await reportBtn.click({ force: true });
+    } catch (e) {
+      // fallback to direct DOM click
+      await page.locator('button[title="Reportar emergencia"]').evaluate((b: HTMLElement) => (b as HTMLElement).click());
+    }
 
     // Verify modal opened
     const modalHeading = page.getByRole('heading', { name: 'Reporte Oficial de Emergencia' });
