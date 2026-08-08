@@ -36,11 +36,11 @@ test.describe('User Login', () => {
     await page.goto('/login');
 
     // Fill login form
-    await page.getByPlaceholder('tucorreo@ejemplo.com').fill('test@example.com');
+    await page.getByPlaceholder('tu@email.com').fill('test@example.com');
     await page.getByPlaceholder('••••••••').fill('password123');
 
     // Submit
-    await page.getByRole('button', { name: 'Entrar a CercaYa' }).click();
+    await page.getByRole('button', { name: 'Ingresar a CercaYa' }).click();
 
     // Verify redirect to home
     await expect(page).toHaveURL('/');
@@ -57,11 +57,23 @@ test.describe('User Login', () => {
       });
     });
 
+    await page.route('http://localhost:3000/api/auth/refresh', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          success: true,
+          data: {
+            token: 'fake-refresh-token'
+          }
+        }
+      });
+    });
+
     await page.goto('/login');
 
-    await page.getByPlaceholder('tucorreo@ejemplo.com').fill('wrong@example.com');
+    await page.getByPlaceholder('tu@email.com').fill('wrong@example.com');
     await page.getByPlaceholder('••••••••').fill('wrongpass');
-    await page.getByRole('button', { name: 'Entrar a CercaYa' }).click();
+    await page.getByRole('button', { name: 'Ingresar a CercaYa' }).click();
 
     // Verify error message
     await expect(page.getByText('Credenciales inválidas')).toBeVisible();

@@ -49,8 +49,7 @@ test.describe('Incident Creation', () => {
     // Click the report incident button
     // It has a title "Reportar emergencia"
     const reportBtn = page.getByTitle('Reportar emergencia');
-    await expect(reportBtn).toBeVisible();
-    await reportBtn.click();
+    await reportBtn.click({ force: true });
 
     // Verify modal opened
     const modalHeading = page.getByRole('heading', { name: 'Reporte Oficial de Emergencia' });

@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.context().grantPermissions(['geolocation']);
+  await page.context().setGeolocation({ latitude: 4.6097, longitude: -74.0817 });
+});
+
 test('usuario encuentra un vendedor cercano', async ({ page }) => {
   await page.route('http://localhost:3000/api/vendors/categories', async (route) => {
     await route.fulfill({

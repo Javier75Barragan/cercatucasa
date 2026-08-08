@@ -77,18 +77,9 @@ test.describe('Incident Reporting Flow', () => {
     // 3. Navigate to home (map view)
     await expect(page).toHaveURL('/');
 
-    // 4. Click the incident report button (we'll try common selectors, e.g., an icon button or text)
-    // Often it is a floating action button or something in the sidebar
-    const incidentButton = page.locator('button').filter({ hasText: /Reportar|Incidente|Alerta/i }).first();
-    
-    // In case the button is just an icon, we'll click any button inside an incident panel or with title
-    const alternativeButton = page.locator('button[title*="incidente" i], button[aria-label*="incidente" i]').first();
-    
-    if (await incidentButton.isVisible()) {
-        await incidentButton.click();
-    } else if (await alternativeButton.isVisible()) {
-        await alternativeButton.click();
-    }
+    // 4. Click the incident report button
+    const incidentButton = page.locator('button[title="Reportar emergencia"]');
+    await incidentButton.click({ force: true });
 
     // 5. Fill out the incident form
     // Wait for the modal to be visible
