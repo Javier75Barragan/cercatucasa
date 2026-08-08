@@ -2,6 +2,111 @@
 
 Todas las modificaciones notables realizadas a este proyecto serán documentadas en este archivo.
 
+## [24/05/2026] - Mantenimiento de dependencias y auditoría npm
+
+### Seguridad y Hardening
+- **Mejora:** Implementación de **Refresh Tokens en cookies `httpOnly`**. El token de refresco ya no se expone en el cuerpo de la respuesta JSON, mitigando riesgos de robo de tokens mediante scripts maliciosos (XSS).
+- **Añadido:** Dependencia `cookie-parser` para el manejo seguro de cookies en el backend.
+- **Añadido:** Endpoint de **Logout** para limpiar de forma segura las cookies `token` y `refreshToken`.
+- **Frontend:** Configuración de Axios con `withCredentials: true` para soportar el nuevo flujo de autenticación basado en cookies.
+- **Robustez:** Mejora en el manejador de errores global para prevenir fallos al registrar trazas de error.
+- **CORS:** Refactorización de orígenes permitidos para usar listas dinámicas desde variables de entorno.
+- **Mejora:** Actualización del middleware `authenticate` para soportar la lectura de tokens tanto desde el encabezado `Authorization` como desde cookies seguras.
+- **Corregido:** Estabilización de los esquemas de validación Zod en el backend; se sincronizaron los slugs de categorías en los tests (de español a inglés técnico como `groceries`).
+- **Corregido:** Ajuste en las comparaciones de fechas en los tests de integración (`incidents`, `notifications`, `products`) para soportar comparaciones `toBeGreaterThanOrEqual`, evitando fallos por precisión de milisegundos.
+- **Corregido:** Limpieza de la redirección en el frontend (`api.ts`) usando `window.location.replace` para evitar bucles en el historial de navegación tras la expiración del token.
+
+### Testing
+- **Mejora:** Migración de la suite de pruebas de integración (`supertest`) al uso de **`request.agent(app)`**. Esto permite mantener la persistencia de la sesión y las cookies entre múltiples peticiones dentro de un mismo test, simulando mejor el comportamiento de un cliente real.
+- **Actualizado:** Refactorización de `auth.test.ts` y `products.test.ts` para validar la presencia de cookies en lugar de tokens en el body.
+
+### Seguridad y mantenimiento
+- **Verificado:** El repositorio no tenía cambios pendientes sin commit al momento de la revisión. La actualización mobile-first del `17/05` ya estaba resguardada en el commit `ae26059`.
+- **Actualizado:** Dependencias de mantenimiento en `frontend` y `backend`, incluyendo `@typescript-eslint/eslint-plugin` y `@typescript-eslint/parser` a la línea `8.x`, con regeneración de `package-lock.json` en ambos proyectos.
+- **Corregido:** Vulnerabilidades de `axios` y otras dependencias transitivas del frontend mediante actualización segura de dependencias y lockfile.
+- **Corregido:** Vulnerabilidades transitivas del backend, dejando el `npm audit` del backend en `0` hallazgos.
+
+### Estado resultante
+- **Backend:** `npm audit` quedó en `0` vulnerabilidades.
+- **Frontend:** `npm audit` quedó en `2` vulnerabilidades `moderate`, ambas asociadas a `vite/esbuild`.
+- **Pendiente:** La remediación completa del frontend requiere migración a `vite@8`, considerada una actualización mayor de tooling y no un parche automático seguro.
+
+### Verificación
+- **Verificado:** `backend npm test -- src/__tests__/middleware.test.ts` pasando.
+- **Verificado:** `backend npm run build` pasando.
+- **Verificado:** `frontend` mantiene en verde las pruebas tocadas de `Home`, `Login` y `RadarPanel`.
+- **Observado:** `frontend npm run build` sigue presentando un problema de resolución/acceso a `vite.config.ts` desde `esbuild`; no se considera resuelto en esta sesión.
+
+## [08/08/2026] - Corrección y estabilización de pruebas E2E (Playwright)
+
+### Testing / E2E
+- **Corrección:** Ajustes en selectores y flujos de las pruebas E2E para alinear con la UI mobile-first (placeholders, textos de botones, rutas de dashboard). Archivos modificados: `frontend/e2e/user-login.spec.ts`, `frontend/e2e/incident-creation.spec.ts`, `frontend/e2e/incident-report.spec.ts`, `frontend/e2e/user-finds-nearby-vendor.spec.ts`, `frontend/e2e/vendor-visibility.spec.ts`.
+- **Mejora:** Se añadieron mocks locales para `http://localhost:3000/api/auth/refresh` y permisos de geolocalización en los tests que los requieren.
+- **Acción:** Se instaló `@playwright/test` (devDependency) y navegadores mediante `npx playwright install` en el entorno `frontend` para ejecutar la suite E2E localmente.
+- **Ejecución:** Se ejecutó la suite completa de Playwright localmente: 21 tests ejecutados — 10 pasaron y 11 fallaron. Los fallos requieren afinado adicional en botones flotantes/visibilidad mobile y mocks de endpoints de incidentes.
+- **Repositorio:** Se creó la rama `mobile-first-17may-20260521173808` y un Pull Request para revisión: https://github.com/Javier75Barragan/cercatucasa/pull/1
+
+### Siguientes pasos recomendados
+- Añadir mocks o endpoints de prueba para `POST /api/incidents` en los tests de reporting para evitar timeouts al enviar reportes.
+- Revisar selectores mobile-only y considerar `click({ force: true })` con precaución; preferir localizar elementos por roles/labels estables.
+- Re-ejecutar la suite E2E tras las correcciones hasta reducir fallos a 0 en CI antes de mergear.
+
+## [17/05/2026] - Actualización visual mobile-first de CercaYa
+
+### Frontend / UX
+- **Mejorado:** `frontend/src/pages/Home.tsx` con un panel lateral renovado orientado a "Radar comunitario", métricas de actividad, radio y encuentros, y CTA de alertas más visible.
+- **Mejorado:** `frontend/src/components/RadarPanel.tsx` con KPIs de actividad, estado "Por revisar", tarjetas de encuentros más claras y controles más táctiles.
+- **Mejorado:** `frontend/src/components/VendorDetails.tsx` con panel de detalle más moderno, hero visual, métricas compactas de rating/opiniones/distancia y acciones principales `Contactar` / `Ruta`.
+- **Mejorado:** `frontend/src/pages/Login.tsx` para que la pantalla de inicio de sesión sea más pequeña y cómoda en celular: menor ancho, logo más pequeño, padding reducido, inputs compactos y botón más bajo.
+
+### Producto
+- **Definido:** El criterio visual principal del proyecto pasa a ser **mobile-first**. CercaYa debe revisarse primero en celular porque el uso esperado ocurre en la calle, con el teléfono en la mano.
+- **Mantenido:** La implementación conserva la arquitectura actual de CercaYa (`React + Leaflet + backend propio`) y no adopta Firebase ni Google Maps del prototipo externo analizado.
+
+### Testing
+- **Agregado:** Prueba de contrato visual para `Home` validando el lenguaje de "Radar comunitario".
+- **Agregado:** Prueba de `RadarPanel` validando los KPIs de actividad.
+- **Agregado:** Prueba de `Login` validando que el panel de inicio de sesión sea compacto.
+- **Verificado:** `npm test -- --run` con 18 tests pasando.
+- **Verificado:** `npm run build` exitoso. Se mantiene advertencia conocida de bundle principal mayor a 500 kB.
+
+### Documentación
+- **Actualizado:** `DOCUMENTACION_CERCAYA.md` con la decisión mobile-first, el resumen de cambios visuales y el nuevo estado de pruebas frontend.
+
+---
+
+## [07/05/2026] - Correcciones Auditoría Técnica P1 — Build & Seguridad
+
+### 🐛 Bug Fix Crítico
+- **Corregido:** Error de compilación TypeScript en `backend/src/config/database.ts` (error TS2344). Se reemplazó el constraint genérico incorrecto `T extends QueryResultRow` por `T extends Record<string, any>` y se eliminaron los `@ts-ignore`. El backend ahora compila limpiamente con `tsc --noEmit` sin errores.
+
+### 🔒 Seguridad
+- **Eliminado:** `console.log` que imprimía email, nombre y teléfono del usuario en texto plano durante el registro (`auth.ts`). Violación de privacidad GDPR/LOPD.
+- **Corregido:** Error 500 ya no expone el `error.message` interno de Node.js/PostgreSQL al cliente. Ahora responde con un mensaje genérico.
+- **Corregido:** Endpoint `PATCH /api/vendors/:id/location/toggle` ahora verifica que el vendedor pertenece al usuario autenticado antes de permitir el toggle. Antes, cualquier `seller` podía desactivar la ubicación de otro vendedor.
+
+### 🗃️ Base de Datos
+- **Añadido:** Migración `1746660000000_unique-review-per-user.js` que aplica un constraint `UNIQUE (vendor_id, user_id)` en la tabla `reviews`, impidiendo que un usuario califique más de una vez al mismo vendedor (anti-spam).
+
+---
+
+## [07/05/2026] - Finalización de Remediación de Seguridad (Auditoría Cierre)
+
+Durante esta sesión, se completaron los puntos críticos pendientes de la auditoría de seguridad, logrando una calificación final de 9.2/10.
+
+### 🔒 Seguridad (Backend)
+- **Rotación de Credenciales:** Se actualizaron y rotaron tanto el `JWT_SECRET` (ahora 64 caracteres) como la contraseña de la base de datos (`DB_PASSWORD`).
+- **Limpieza de Secretos:** Verificación manual de la eliminación de archivos sensibles y datos por defecto en el código fuente.
+- **Validación JWT Hardening:** Se aseguró que el sistema no arranque si las claves secretas son insuficientes o faltan.
+
+### 📝 Documentación & Auditoría
+- **Creado:** `auditoria/INFORME_FINAL_AUDITORIA.md` detallando todos los éxitos de la remediación.
+- **Actualizado:** `README.md` con un diseño profesional, secciones de seguridad y stack tecnológico detallado.
+- **Actualizado:** `.env.example` en backend y frontend para reflejar los nuevos requisitos de seguridad.
+- **Actualizado:** `auditoria/estado_remediacion.md` y `auditoria/checklist_remediacion.md` reflejando el 100% de los puntos críticos resueltos.
+
+---
+
 ## [30/04/2026] - Seguridad, Hardening y Tooling IA
 
 Durante esta sesión, el objetivo principal fue mitigar vulnerabilidades críticas de seguridad detectadas en la auditoría inicial y preparar el entorno con herramientas automatizadas de IA para acelerar el desarrollo futuro.

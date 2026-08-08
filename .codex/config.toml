@@ -1,0 +1,9 @@
+[mcp_servers.postgresql_disabled]
+args = [
+    "-y",
+    "@modelcontextprotocol/server-postgres",
+]
+command = "npx"
+
+[mcp_servers.postgresql_disabled.env]
+POSTGRES_CONNECTION_STRING = "postgresql://user:password@localhost:5432/dbname"

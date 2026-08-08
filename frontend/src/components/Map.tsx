@@ -10,7 +10,7 @@ import { Vendor } from '../types';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
-let DefaultIcon = L.icon({
+const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],
@@ -149,7 +149,7 @@ const RadiusCircle = ({ center, radius }: { center: [number, number]; radius: nu
 
 const Map = () => {
   const { vendors, selectedVendor, setSelectedVendor, trackingVendor, setTrackingVendor, filters } = useVendorsStore();
-  const { location } = useAuthStore();
+  const { location, user } = useAuthStore();
   const [mapCenter, setMapCenter] = useState<[number, number]>([4.6097, -74.0817]); // Bogotá por defecto
 
   useEffect(() => {
@@ -166,11 +166,18 @@ const Map = () => {
 
   const filteredVendors = useMemo(() => {
     return vendors.filter((v) => {
+      // No mostrar mi propio marcador de vendedor en el listado general si ya tengo el marcador de usuario especial
+      if (user?.role === 'seller' && v.user_id === user.id) return false;
       if (filters.category && v.category !== filters.category) return false;
       if (filters.type && v.type !== filters.type) return false;
       return v.latitude && v.longitude;
     });
-  }, [vendors, filters]);
+  }, [vendors, filters, user]);
+
+  const myVendor = useMemo(() => {
+    if (user?.role !== 'seller') return null;
+    return vendors.find(v => v.user_id === user.id);
+  }, [vendors, user]);
 
   const handleGetDirections = (vendor: Vendor) => {
     if (vendor.latitude && vendor.longitude) {
@@ -230,37 +237,74 @@ const Map = () => {
           <Marker
             position={[location.lat, location.lng]}
             icon={L.divIcon({
-              className: 'user-marker-glow',
+              className: 'user-marker-container',
               html: `
-                <div style="
-                  position: relative;
-                  width: 20px;
-                  height: 20px;
-                ">
-                  <div style="
-                    position: absolute;
-                    inset: 0;
-                    background: #3b82f6;
-                    border-radius: 50%;
-                    animation: pulse-ring 2s ease-out infinite;
-                    opacity: 0.4;
-                  "></div>
+                <div style="position: relative; width: 40px; height: 40px; display: flex; items-center; justify-content: center;">
+                  ${myVendor?.location_active ? `
+                    <div style="
+                      position: absolute;
+                      top: -35px;
+                      left: 50%;
+                      transform: translateX(-50%);
+                      background: #10b981;
+                      color: white;
+                      padding: 4px 10px;
+                      border-radius: 20px;
+                      font-size: 10px;
+                      font-weight: 900;
+                      white-space: nowrap;
+                      text-transform: uppercase;
+                      letter-spacing: 1px;
+                      box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+                      border: 2px solid rgba(255,255,255,0.2);
+                      display: flex;
+                      align-items: center;
+                      gap: 4px;
+                      z-index: 1000;
+                    ">
+                      <div style="width: 6px; height: 6px; background: white; border-radius: 50%; animation: pulse 1s infinite;"></div>
+                      ESTÁS TRANSMITIENDO
+                    </div>
+                  ` : ''}
+                  
                   <div style="
                     position: relative;
-                    width: 20px;
-                    height: 20px;
-                    background: linear-gradient(135deg, #60a5fa, #3b82f6);
-                    border-radius: 50%;
-                    border: 3px solid rgba(255,255,255,0.9);
-                    box-shadow: 0 0 15px rgba(59,130,246,0.5), 0 2px 8px rgba(0,0,0,0.4);
-                  "></div>
+                    width: 24px;
+                    height: 24px;
+                  ">
+                    <div style="
+                      position: absolute;
+                      inset: -8px;
+                      background: ${myVendor?.location_active ? '#10b981' : '#3b82f6'};
+                      border-radius: 50%;
+                      animation: pulse-ring 2s ease-out infinite;
+                      opacity: 0.3;
+                    "></div>
+                    <div style="
+                      position: relative;
+                      width: 24px;
+                      height: 24px;
+                      background: linear-gradient(135deg, ${myVendor?.location_active ? '#34d399, #10b981' : '#60a5fa, #3b82f6'});
+                      border-radius: 50%;
+                      border: 3px solid white;
+                      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      color: white;
+                      font-size: 12px;
+                    ">
+                      ${myVendor?.category ? (categoryIcons[myVendor.category] || '👤') : '👤'}
+                    </div>
+                  </div>
                 </div>
               `,
-              iconSize: [20, 20],
-              iconAnchor: [10, 10],
+              iconSize: [40, 40],
+              iconAnchor: [20, 20],
             })}
           />
         )}
+
 
         {/* Marcadores de vendedores */}
         {filteredVendors.map((vendor) => (

@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MapPin, Power, Store, Package, X, Clock, Signal, Edit3, Heart, Eye, Loader2, AlertTriangle, Bell, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useSocket } from '../hooks/useSocket';
 import { vendorsApi } from '../services/api';
 import { Vendor, Category, Incident } from '../types';
+import ImageUploader from '../components/ImageUploader';
 
 const DAYS = [
   { key: 'monday', label: 'Lunes' },
@@ -54,6 +54,8 @@ const VendorDashboard = () => {
     email: '',
     website: '',
     address: '',
+    avatar_url: '',
+    photos: [] as string[],
     subcategories: [] as string[],
     schedule: {
       monday: { open: '08:00', close: '18:00' },
@@ -73,11 +75,6 @@ const VendorDashboard = () => {
     favorites: 32
   });
 
-  useEffect(() => {
-    loadCategories();
-    loadVendor();
-  }, []);
-
   const loadCategories = async () => {
     try {
       const response = await vendorsApi.getCategories();
@@ -87,13 +84,7 @@ const VendorDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (geoLocation) {
-      setLocation(geoLocation);
-    }
-  }, [geoLocation, setLocation]);
-
-  const loadVendor = async () => {
+  const loadVendor = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
     try {
@@ -110,7 +101,18 @@ const VendorDashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [joinVendorRoom, user]);
+
+  useEffect(() => {
+    loadCategories();
+    loadVendor();
+  }, [loadVendor]);
+
+  useEffect(() => {
+    if (geoLocation) {
+      setLocation(geoLocation);
+    }
+  }, [geoLocation, setLocation]);
 
   const handleToggleActive = async () => {
     if (!vendor) return;
@@ -186,8 +188,6 @@ const VendorDashboard = () => {
         
         if (response.data.token) {
           setToken(response.data.token);
-          // También actualizar en localStorage para el interceptor
-          localStorage.setItem('token', response.data.token);
         }
       } else {
         setFormError(response.data.error || 'Error al crear el negocio');
@@ -272,6 +272,20 @@ const VendorDashboard = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-1.5 h-6 bg-primary-500 rounded-full"></div>
                     <h3 className="text-[11px] font-black text-white/30 uppercase tracking-[0.2em]">Identidad Visual</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-5 mb-4">
+                    <ImageUploader 
+                      label="Logo / Avatar" 
+                      onUploadSuccess={(url) => handleInputChange('avatar_url', url)}
+                    />
+                    <ImageUploader 
+                      label="Foto Portada" 
+                      onUploadSuccess={(url) => {
+                        setFormData(prev => ({ ...prev, photos: [url] }));
+                      }}
+                      aspectRatio="video"
+                    />
                   </div>
                   
                   <div className="space-y-1.5">

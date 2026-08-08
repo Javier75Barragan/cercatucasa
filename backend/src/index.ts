@@ -4,7 +4,28 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
+import cookieParser from 'cookie-parser';
+import path from 'path';
+
 import { initializeWebSocket } from './services/websocket';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
+import * as Sentry from '@sentry/node';
+import rateLimit from 'express-rate-limit';
+import winston from 'winston';
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    }),
+  ],
+});
 
 // Configuración
 import { initDB } from './config/database';
@@ -18,6 +39,8 @@ import vendorRoutes from './routes/vendors';
 import productRoutes from './routes/products';
 import notificationRoutes from './routes/notifications';
 import incidentRoutes from './routes/incidents';
+import uploadRoutes from './routes/upload';
+
 
 dotenv.config();
 
@@ -34,29 +57,44 @@ if (process.env.JWT_SECRET.length < 32) {
 const app: Application = express();
 const httpServer = createServer(app);
 
+// Sentry Init (v8+ API)
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  tracesSampleRate: 1.0,
+});
+
 // Inicializar WebSocket
 initializeWebSocket(httpServer);
 
 // Middleware
 app.use(helmet());
 
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Límite de 100 requests por IP por ventana
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
+
 // Configuración de CORS segura y flexible
-const allowedOrigin = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.replace(/\/$/, '') : 'http://localhost:5173';
+const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:5173'];
 
 app.use(cors({
-  origin: [
-    allowedOrigin,
-    'https://cercatucasa.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:3000'
-  ],
+  origin: allowedOrigins,
   credentials: true,
 }));
 
-console.log('🔒 CORS: Seguridad restaurada para:', allowedOrigin);
+console.log('🔒 CORS: Orígenes permitidos:', allowedOrigins.join(', '));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser() as any);
+
+// Servir archivos estáticos (uploads)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 
 // Health check
 app.get('/health', (_req, res) => {
@@ -74,6 +112,14 @@ app.use('/api/vendors', vendorRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/incidents', incidentRoutes);
+app.use('/api/upload', uploadRoutes);
+
+
+// Documentación
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Sentry error handler (v8+ API — debe ir antes del error handler propio)
+Sentry.setupExpressErrorHandler(app);
 
 // 404
 app.use(notFoundHandler);
@@ -105,5 +151,15 @@ const startServer = async (): Promise<void> => {
     process.exit(1);
   }
 };
+
+// Manejo global de errores para evitar que el proceso muera
+process.on('uncaughtException', (error) => {
+  console.error('🔥 UNCAUGHT EXCEPTION:', error);
+  // En producción podrías querer hacer un graceful shutdown aquí
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🌪️ UNHANDLED REJECTION at:', promise, 'reason:', reason);
+});
 
 startServer();

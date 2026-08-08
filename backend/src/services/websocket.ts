@@ -8,7 +8,12 @@ let io: Server;
 export const initializeWebSocket = (httpServer: HttpServer): Server => {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+      origin: [
+        process.env.CORS_ORIGIN || 'http://localhost:5173',
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'https://cercatucasa.vercel.app'
+      ],
       methods: ['GET', 'POST'],
       credentials: true,
     },
@@ -65,25 +70,23 @@ export const initializeWebSocket = (httpServer: HttpServer): Server => {
       try {
         const radiusDegrees = radius / 111000;
         const result = await query(
-          `SELECT
-            v.id, v.name, v.category, v.type, v.avatar_url, v.rating,
-            vl.latitude, vl.longitude,
-            (6371000 * acos(
-              cos(radians($1)) * cos(radians(vl.latitude)) *
-              cos(radians(vl.longitude) - radians($2)) +
-              sin(radians($1)) * sin(radians(vl.latitude))
-            )) as distance_meters
-          FROM vendors v
-          JOIN vendor_locations vl ON v.id = vl.vendor_id
-          WHERE vl.is_active = true
-            AND v.is_active = true
-            AND vl.latitude BETWEEN $1 - $4 AND $1 + $4
-            AND vl.longitude BETWEEN $2 - $4 AND $2 + $4
-          HAVING (6371000 * acos(
-            cos(radians($1)) * cos(radians(vl.latitude)) *
-            cos(radians(vl.longitude) - radians($2)) +
-            sin(radians($1)) * sin(radians(vl.latitude))
-          )) <= $3
+          `SELECT * FROM (
+            SELECT
+              v.id, v.name, v.category, v.type, v.avatar_url, v.rating,
+              vl.latitude, vl.longitude,
+              (6371000 * acos(
+                cos(radians($1)) * cos(radians(vl.latitude)) *
+                cos(radians(vl.longitude) - radians($2)) +
+                sin(radians($1)) * sin(radians(vl.latitude))
+              )) as distance_meters
+            FROM vendors v
+            JOIN vendor_locations vl ON v.id = vl.vendor_id
+            WHERE vl.is_active = true
+              AND v.is_active = true
+              AND vl.latitude BETWEEN $1 - $4 AND $1 + $4
+              AND vl.longitude BETWEEN $2 - $4 AND $2 + $4
+          ) AS nearby
+          WHERE distance_meters <= $3
           ORDER BY distance_meters ASC`,
           [lat, lng, radius, radiusDegrees]
         );
@@ -110,32 +113,18 @@ export const initializeWebSocket = (httpServer: HttpServer): Server => {
           return socket.emit('location-error', { error: 'No autorizado para actualizar ubicación' });
         }
 
-        // Desactivar ubicaciones anteriores
+        // UPSERT atómico: una sola query en vez de 3
         await query(
-          `UPDATE vendor_locations SET is_active = false WHERE vendor_id = $1`,
-          [vendorId]
+          `INSERT INTO vendor_locations (vendor_id, latitude, longitude, accuracy, is_active)
+           VALUES ($1, $2, $3, $4, true)
+           ON CONFLICT (vendor_id) WHERE is_active = true
+           DO UPDATE SET 
+             latitude = EXCLUDED.latitude,
+             longitude = EXCLUDED.longitude,
+             accuracy = EXCLUDED.accuracy,
+             updated_at = CURRENT_TIMESTAMP`,
+          [vendorId, lat, lng, accuracy]
         );
-
-        // Verificar si ya existe
-        const existing = await query(
-          `SELECT id FROM vendor_locations WHERE vendor_id = $1`,
-          [vendorId]
-        );
-
-        if (existing.rows.length > 0) {
-          await query(
-            `UPDATE vendor_locations 
-             SET latitude = $1, longitude = $2, accuracy = $3, is_active = true, updated_at = CURRENT_TIMESTAMP
-             WHERE vendor_id = $4`,
-            [lat, lng, accuracy, vendorId]
-          );
-        } else {
-          await query(
-            `INSERT INTO vendor_locations (vendor_id, latitude, longitude, accuracy, is_active)
-             VALUES ($1, $2, $3, $4, true)`,
-            [vendorId, lat, lng, accuracy]
-          );
-        }
 
         // Notificar a clientes cercanos
         const nearbyRooms = getNearbyRooms(lat, lng);

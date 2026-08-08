@@ -7,11 +7,23 @@ export interface CustomError extends Error {
 
 export const errorHandler: ErrorRequestHandler = (
   err: CustomError,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): void => {
-  console.error('Error:', err);
+  // LOG DETALLADO PARA EL PROGRAMADOR
+  console.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  console.error(`🚨 ERROR EN PROCESO: ${req.method} ${req.originalUrl}`);
+  console.error(`📅 ${new Date().toLocaleString()}`);
+  console.error(`🔴 MENSAJE: ${err.message}`);
+  if (err.code) console.error(`🆔 CÓDIGO: ${err.code}`);
+  if (err.stack) {
+    const stackLines = err.stack.split('\n');
+    if (stackLines.length > 1) {
+      console.error(`📚 STACK: ${stackLines[1].trim()}`);
+    }
+  }
+  console.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
   // Errores de PostgreSQL
   if (err.code === '23505') {
