@@ -139,7 +139,7 @@ describe('Home Page', () => {
     render(<Home />);
 
     expect(screen.getByText('Silencio en el área')).toBeInTheDocument();
-    expect(screen.getByText(/Expandir búsqueda/i)).toBeInTheDocument();
+    expect(screen.getByText(/Expandir y ajustar filtros/i)).toBeInTheDocument();
   });
 
   it('calls setFilters when the expand radius button is clicked', async () => {
@@ -155,7 +155,7 @@ describe('Home Page', () => {
 
     render(<Home />);
 
-    const expandButton = screen.getByText(/Expandir búsqueda/i);
+    const expandButton = screen.getByText(/Expandir y ajustar filtros/i);
     fireEvent.click(expandButton);
 
     expect(mockSetFilters).toHaveBeenCalledWith({ radius: 700 });

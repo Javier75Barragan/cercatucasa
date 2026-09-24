@@ -37,7 +37,14 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+test-results/
+playwright-report/
 
 # Misc
 .cache/
 .temp/
+*.zip
+.npm-cache/
+
+# User uploads
+uploads/

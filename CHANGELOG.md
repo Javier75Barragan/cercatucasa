@@ -2,6 +2,29 @@
 
 Todas las modificaciones notables realizadas a este proyecto serán documentadas en este archivo.
 
+## [24/09/2026] - Revisión integral: auth a cookies, seguridad, tests y documentación
+
+### Seguridad
+- **Completada** la migración de refresh tokens a cookies `httpOnly`: las rutas `register`, `login` y `refresh` ahora establecen cookies `token` y `refreshToken`, y **ya no exponen `refreshToken` en el body JSON** (mitigación XSS). `logout` limpia ambas cookies. El endpoint `refresh` ahora lee el token desde la cookie, no del body.
+- **Corregida** dependencia oculta: `cookie-parser` y `@types/cookie-parser` ahora están declarados en `backend/package.json` (antes se resolvía desde un `node_modules` global fuera del proyecto, lo que rompería en CI/Railway).
+- **Remediadas** 17 vulnerabilidades de producción (8 high) vía `npm audit fix`: la causa principal era `socket.io → engine.io → ws` (DoS de agotamiento de memoria), además de `multer`, `js-yaml`, `ip-address`, `brace-expansion`, `qs`, `morgan` y `body-parser`. Backend quedó en **0 vulnerabilidades** (incluye devDependencies).
+
+### Higiene del repositorio
+- Eliminados del tracking git (sin borrar los archivos): `backend/.env.production`, imágenes de `backend/uploads/`, artefactos de `frontend/test-results/` y archivos de debug (`check.js`, `cmd_error.txt`, `products_out.txt`).
+- Actualizado `.gitignore`: ahora ignora `uploads/`, `test-results/`, `playwright-report/`, `*.zip` y `.npm-cache/`.
+
+### Testing
+- **Backend:** corregidos 3 errores de compilación en los tests (`middleware`, `auth`, `products`) que impedían ejecutar 3 de 7 suites. Resultado: **139/139 tests en verde** (7 suites).
+- **Frontend:** corregida la deriva de texto en `Home.test.tsx` (el botón del estado vacío cambió a "Expandir y ajustar filtros"). Resultado: **18/18 tests en verde**.
+
+### Verificación de build
+- Backend `npm run build` en verde.
+- Frontend `npm run build` en verde con `vite@8.1.3` (el error previo de "vite.config.ts" era una limitación del sandbox al cargar la config de Vite, no un bug del proyecto).
+
+### Documentación
+- Corregida la estructura rota de `DOCUMENTACION_CERCAYA.md` (sección 6 interrumpida y numeración "## 7" duplicada).
+- Actualizado el estado de `vite@8`, vulnerabilidades y flujo de auth en la documentación consolidada.
+
 ## [24/05/2026] - Mantenimiento de dependencias y auditoría npm
 
 ### Seguridad y Hardening

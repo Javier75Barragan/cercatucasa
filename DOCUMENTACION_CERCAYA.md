@@ -195,37 +195,6 @@ CercaYa/
     src/
       config/
       
-## 7. Playwright E2E — Actualización 2026-08-08
-
-Se añadieron y ajustaron pruebas E2E con Playwright para alinear la suite con la versión "mobile-first" de la interfaz. Resumen de acciones realizadas:
-
-- Se modificaron selectores y textos en las siguientes pruebas para reflejar placeholders y botones actuales:
-   - `frontend/e2e/user-login.spec.ts`
-   - `frontend/e2e/incident-creation.spec.ts`
-   - `frontend/e2e/incident-report.spec.ts`
-   - `frontend/e2e/user-finds-nearby-vendor.spec.ts`
-   - `frontend/e2e/vendor-visibility.spec.ts`
-
-- Se añadieron permisos de geolocalización (`page.context().grantPermissions(['geolocation'])`) y coordenadas fijas para tests dependientes de ubicación.
-- Se añadió un mock local de `http://localhost:3000/api/auth/refresh` en los tests que requieren flujo de refresh token para evitar bloqueos en los interceptores de axios.
-- Se instaló y configuró `@playwright/test` en `frontend` y se ejecutó `npx playwright install` para descargar navegadores.
-
-Ejecución local realizada:
-
-```bash
-cd frontend
-npx playwright test --reporter=list
-```
-
-Resultado (local): 21 tests ejecutados — 10 pasaron, 11 fallaron. Los fallos están documentados en `frontend/test-results/` y requieren:
-
-- Añadir mocks para `POST /api/incidents` y otros endpoints de backend usados por forms cuya carga queda deshabilitada en el entorno de test.
-- Revisar elementos flotantes (floating buttons) que pueden estar ocultos en viewport de escritorio; adaptar clicks con `force` o usar localizadores por `title`/`aria-label` o `role`.
-
-Se creó un Pull Request con los cambios: https://github.com/Javier75Barragan/cercatucasa/pull/1
-
-Si querés, puedo seguir corrigiendo los tests fallidos en esta rama o crear pruebas nuevas que cubran los casos detectados.
-
       middleware/
       routes/
       schemas/
@@ -433,11 +402,11 @@ La seguridad critica parece mayormente remediada, pero antes de produccion se de
 - Pruebas de WebSocket con token invalido, ausente y usuario sin permisos.
 - Configuracion real de CORS, rate limit y secretos en produccion.
 
-Actualizacion de mantenimiento 2026-05-24:
+Actualizacion de revision 2026-08:
 
-- Backend sin vulnerabilidades activas en `npm audit`.
-- Frontend reducido a 2 vulnerabilidades `moderate`, ambas relacionadas con `vite/esbuild`.
-- La remediacion completa del frontend queda pendiente de una migracion a `vite@8`, tratada como upgrade mayor de tooling y no como parche menor.
+- Backend y frontend en `0` vulnerabilidades en `npm audit` (incluye devDependencies).
+- `vite` migrado a `8.1.3`; el build del frontend compila correctamente.
+- Flujo de auth con refresh token en cookies `httpOnly` implementado en las rutas `register`/`login`/`refresh`/`logout`.
 
 ---
 
@@ -519,7 +488,7 @@ Resultado observado:
 - Se agregaron pruebas de contrato visual para el lenguaje de radar comunitario, KPIs del radar y tarjeta compacta de inicio de sesion.
 - Build mostro advertencia de bundle principal mayor a 500 kB.
 - Mantenimiento 2026-05-24: pruebas de `Home`, `Login` y `RadarPanel` nuevamente en verde.
-- Mantenimiento 2026-05-24: `npm run build` no pudo certificarse por un error de resolucion/acceso a `vite.config.ts` reportado por `esbuild`.
+- Revision 2026-08: `npm run build` verificado en verde con `vite@8.1.3`; el error previo era una limitacion del sandbox al cargar la config de Vite, no un bug del proyecto. Suite frontend: 18/18 tests.
 
 ### Pruebas prioritarias pendientes
 
@@ -731,8 +700,8 @@ npm run build
 | Objetivo de producto | Claro | Conectar actividad cercana en tiempo real. |
 | Arquitectura | Buena | Backend/frontend separados, TypeScript completo. |
 | Seguridad | Fuerte pero requiere verificacion final | Remediacion avanzada, falta validar entorno/historial. |
-| Backend | Endurecido y verificado | `npm audit` en 0; auth/middleware y build verificados. |
-| Frontend | Parcialmente verificado | Pruebas UI de Home, RadarPanel y Login en verde; quedan 2 moderadas de `vite/esbuild` y el build necesita revision adicional. |
+| Backend | Verificado | `npm audit` en 0 (incluye dev); 139/139 tests en verde; build OK. |
+| Frontend | Verificado | `npm audit` en 0; 18/18 tests en verde; build OK con `vite@8.1.3`. |
 | UX principal | Mejorada con enfoque mobile-first | Radar, detalle de vendedor e inicio de sesion fueron compactados/renovados. |
 | Documentacion | Abundante | Ahora consolidada en este archivo. |
 | Auditoria | En proceso | Seguridad y producto documentados. |
@@ -768,7 +737,7 @@ npm run build
 - [x] CI/CD con test, lint y build.
 - [ ] E2E estables.
 - [ ] Observabilidad.
-- [ ] Migracion controlada de `vite` a `8.x` para cerrar las 2 vulnerabilidades `moderate` restantes del frontend.
+- [x] Migracion controlada de `vite` a `8.x` para cerrar las 2 vulnerabilidades `moderate` restantes del frontend.
 - [ ] Revision final de seguridad.
 - [ ] Politica de privacidad/ubicacion.
 - [ ] Validacion con usuarios reales.

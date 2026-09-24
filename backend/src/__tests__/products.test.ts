@@ -96,7 +96,7 @@ describe('POST /api/products', () => {
     expect(res.status).toBe(201);
     const queryCall = mockQuery.mock.calls.find(call => call[0].includes('INSERT'));
     // Verificar que se incluye currency por defecto
-    expect(queryCall[1]).toContain('USD');
+    expect(queryCall![1]).toContain('USD');
   });
 
   it('debe devolver 403 si el usuario no es dueño del vendedor', async () => {

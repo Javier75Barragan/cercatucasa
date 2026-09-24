@@ -70,7 +70,7 @@ describe('Middleware de Autenticación y Tokens (auth.ts)', () => {
 
     beforeEach(() => {
       app = express();
-      app.use(cookieParser());
+      app.use(cookieParser() as any);
       app.use(express.json());
       app.get('/protected', authenticate, (req: Request, res: Response) => {
         res.status(200).json({ success: true, user: req.user });
@@ -217,7 +217,7 @@ describe('Middleware de Autenticación y Tokens (auth.ts)', () => {
 
     beforeEach(() => {
       app = express();
-      app.use(cookieParser());
+      app.use(cookieParser() as any);
       app.use(express.json());
       app.get('/optional', optionalAuth, (req: Request, res: Response) => {
         res.status(200).json({ success: true, user: req.user });

@@ -1,14 +1,27 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import bcrypt from 'bcrypt';
 import rateLimit from 'express-rate-limit';
 import { query } from '../config/database';
 import { generateToken, generateRefreshToken, authenticate, verifyRefreshToken } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { validate } from '../middleware/validate';
-import { registerSchema, loginSchema, updateProfileSchema, updatePasswordSchema, refreshTokenSchema } from '../schemas/auth';
+import { registerSchema, loginSchema, updateProfileSchema, updatePasswordSchema } from '../schemas/auth';
 import { User, ApiResponse } from '../types';
 
 const router = Router();
+
+// Opciones de cookies httpOnly (access + refresh)
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
+  path: '/',
+};
+
+const setAuthCookies = (res: Response, token: string, refreshToken: string) => {
+  res.cookie('token', token, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
+  res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+};
 
 // Configuración de rate limiting para autenticación
 const authLimiter = rateLimit({
@@ -106,9 +119,12 @@ router.post(
         [user.id, refreshToken]
       );
 
-      const response: ApiResponse<{ user: typeof user; token: string; refreshToken: string }> = {
+      // El refresh token viaja en cookie httpOnly; no se expone en el body.
+      setAuthCookies(res, token, refreshToken);
+
+      const response: ApiResponse<{ user: typeof user; token: string }> = {
         success: true,
-        data: { user, token, refreshToken },
+        data: { user, token },
         message: 'Usuario registrado exitosamente',
       };
 
@@ -238,9 +254,12 @@ router.post(
     // Eliminar password del objeto de respuesta
     const { password: _, ...userWithoutPassword } = user;
 
-    const response: ApiResponse<{ user: typeof userWithoutPassword; token: string; refreshToken: string }> = {
+    // El refresh token viaja en cookie httpOnly; no se expone en el body.
+    setAuthCookies(res, token, refreshToken);
+
+    const response: ApiResponse<{ user: typeof userWithoutPassword; token: string }> = {
       success: true,
-      data: { user: userWithoutPassword, token, refreshToken },
+      data: { user: userWithoutPassword, token },
       message: 'Login exitoso',
     };
 
@@ -277,9 +296,18 @@ router.post(
 router.post(
   '/refresh',
   authLimiter,
-  validate(refreshTokenSchema),
   asyncHandler(async (req, res) => {
-    const { refreshToken } = req.body;
+    // El refresh token viaja en cookie httpOnly, no en el body
+    const refreshToken = (req as any).cookies?.refreshToken;
+
+    if (!refreshToken) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: 'Refresh token no proporcionado',
+      };
+      res.status(401).json(response);
+      return;
+    }
 
     // Verificar si el token existe en BD y no ha expirado
     const result = await query(
@@ -313,9 +341,12 @@ router.post(
         [newRefreshToken, refreshToken]
       );
 
+      // Renovar cookies httpOnly
+      setAuthCookies(res, newToken, newRefreshToken);
+
       res.json({
         success: true,
-        data: { token: newToken, refreshToken: newRefreshToken }
+        data: { token: newToken }
       });
     } catch (error) {
       await query(`DELETE FROM refresh_tokens WHERE token = $1`, [refreshToken]);
@@ -354,12 +385,9 @@ router.post(
       await query(`DELETE FROM refresh_tokens WHERE token = $1`, [refreshToken]);
     }
 
-    // Limpiar cookie si existe
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
+    // Limpiar cookies de acceso y refresh
+    res.clearCookie('token', cookieOptions);
+    res.clearCookie('refreshToken', cookieOptions);
 
     res.json({
       success: true,

@@ -84,7 +84,7 @@ describe('POST /api/auth/register', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it('debe registrar un usuario nuevo exitosamente (201)', async () => {
@@ -144,7 +144,7 @@ describe('POST /api/auth/register', () => {
 
 describe('POST /api/auth/login', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it('debe autenticar correctamente con credenciales válidas (200)', async () => {
@@ -216,7 +216,7 @@ describe('POST /api/auth/login', () => {
 
 describe('POST /api/auth/refresh', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it('debe devolver 401 si no hay cookie de refresh token', async () => {
@@ -257,14 +257,14 @@ describe('POST /api/auth/logout', () => {
     // Verificar que se envían instrucciones para borrar las cookies
     const cookies = res.get('Set-Cookie');
     expect(cookies).toBeDefined();
-    expect(cookies.some(c => c.includes('token=;'))).toBe(true);
-    expect(cookies.some(c => c.includes('refreshToken=;'))).toBe(true);
+    expect(cookies!.some(c => c.includes('token=;'))).toBe(true);
+    expect(cookies!.some(c => c.includes('refreshToken=;'))).toBe(true);
   });
 });
 
 describe('GET /api/auth/me', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it('debe devolver datos del usuario autenticado (200)', async () => {
@@ -304,7 +304,7 @@ describe('GET /api/auth/me', () => {
 
 describe('PUT /api/auth/me', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it('debe actualizar perfil del usuario (200)', async () => {
@@ -348,7 +348,7 @@ describe('PUT /api/auth/me', () => {
 
 describe('PUT /api/auth/password', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it('debe cambiar contraseña exitosamente (200)', async () => {
