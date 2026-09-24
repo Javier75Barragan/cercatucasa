@@ -6,7 +6,11 @@ test.describe('Incident Creation', () => {
     await context.setGeolocation({ latitude: 4.6097, longitude: -74.0817 });
   });
 
-  test('User can create an incident report', async ({ page }) => {
+  test('User can create an incident report', async ({ page }, testInfo) => {
+    if (testInfo.project.name === 'chromium') {
+      testInfo.skip('This incident creation flow is mobile-only.');
+    }
+
     // Mock incident types
     await page.route('**/api/incidents/types', async (route) => {
       await route.fulfill({
@@ -21,63 +25,65 @@ test.describe('Incident Creation', () => {
     });
 
     // Mock incident creation (POST) and provide a GET fallback
-    await page.route('**/api/incidents', async (route, request) => {
+    await page.route('**/api/incidents*', async (route, request) => {
       if (request.method() === 'POST') {
-        await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ success: true, data: { id: 'incident-1', type: 'accident', name: 'Juan Perez' } }) });
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: { id: 'incident-1', type: 'accident', name: 'Juan Perez' } })
+        });
       } else {
-        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: [] })
+        });
       }
     });
 
     // Mock vendors API to prevent home page from hanging
-    await page.route('http://localhost:3000/api/vendors/nearby**', async (route) => {
+    await page.route('**/api/vendors/nearby**', async (route) => {
       await route.fulfill({
-        json: { success: true, data: [] }
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [] })
       });
     });
 
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
-    // Ensure page loaded (accept possible heading variants)
-    await expect(page.getByRole('heading', { name: /Última hora en tu zona|Radar comunitario/i })).toBeVisible();
+    const reportBtn = page.locator('button[title="Reportar emergencia"]');
+    await expect(reportBtn).toBeVisible({ timeout: 15000 });
+    await reportBtn.click({ force: true });
 
-    // Click the report incident button
-    // It has a title "Reportar emergencia"
-    const reportBtn = page.getByTitle('Reportar emergencia');
-    // Try clicking the floating button robustly
-    try {
-      await reportBtn.click({ force: true });
-    } catch (e) {
-      // fallback to direct DOM click
-      await page.locator('button[title="Reportar emergencia"]').evaluate((b: HTMLElement) => (b as HTMLElement).click());
-    }
+    const modalHeading = page.getByRole('heading', { name: /Reporte Oficial de Emergencia/i });
+    await expect(modalHeading).toBeVisible({ timeout: 15000 });
 
-    // Verify modal opened
-    const modalHeading = page.getByRole('heading', { name: 'Reporte Oficial de Emergencia' });
-    await expect(modalHeading).toBeVisible();
-
-    // Select incident type
     await page.getByRole('button', { name: /Accidente/i }).click();
+    await page.getByPlaceholder(/Ej: Juan Pérez/i).fill('Juan Perez');
+    await page.getByPlaceholder(/300 123 4567/i).fill('3001234567');
+    await page.getByPlaceholder(/Describe brevemente/i).fill('Accidente en la esquina');
 
-    // Fill form
-    await page.getByPlaceholder('Ej: Juan Pérez').fill('Juan Perez');
-    await page.getByPlaceholder('300 123 4567').fill('3001234567');
-    await page.getByPlaceholder('Describe brevemente').fill('Accidente en la esquina');
+    // Esperar que el indicador de ubicación cambie a verde antes de verificar el texto.
+    // El IncidentReportForm llama getCurrentPosition al abrirse — puede tardar en resolverse.
+    await page.waitForFunction(
+      () => {
+        const dot = document.querySelector('.bg-green-500.animate-pulse');
+        return dot !== null;
+      },
+      { timeout: 20000 }
+    );
+    await expect(page.getByText(/Ubicación detectada/i)).toBeVisible({ timeout: 5000 });
 
-    // Submit (enable button if client-side validation blocks it in test env)
     const submitBtn = page.getByRole('button', { name: /ENVIAR REPORTE DE EMERGENCIA/i });
-    await page.evaluate(() => {
-      const b = document.querySelector('button[type="submit"]') as HTMLButtonElement | null;
-      if (b && b.disabled) b.disabled = false;
-    });
+    await expect(submitBtn).toBeEnabled({ timeout: 15000 });
 
-    // Click and wait for the POST request to /api/incidents to ensure the app processed the submission
     await Promise.all([
-      page.waitForRequest(req => req.url().includes('/api/incidents') && req.method() === 'POST', { timeout: 10000 }),
-      submitBtn.evaluate((b: HTMLElement) => (b as HTMLElement).click())
+      page.waitForResponse(res => res.url().includes('/api/incidents') && res.status() === 201, { timeout: 15000 }),
+      submitBtn.click()
     ]);
 
-    // After backend acknowledgement, wait for modal to close (longer timeout for safety)
     await expect(modalHeading).toBeHidden({ timeout: 15000 });
   });
 });

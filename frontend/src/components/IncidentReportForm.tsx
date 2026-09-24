@@ -47,6 +47,9 @@ const IncidentReportForm = ({ isOpen, onClose, onSuccess }: IncidentReportFormPr
       return;
     }
 
+    // Limpiar error previo mientras se intenta obtener ubicación
+    setError(null);
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setLocation({
@@ -59,9 +62,9 @@ const IncidentReportForm = ({ isOpen, onClose, onSuccess }: IncidentReportFormPr
         setError('No pudimos obtener tu ubicación. Activa el GPS e intenta de nuevo.');
       },
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
+        enableHighAccuracy: false,  // false es más rápido y suficiente para reportes
+        timeout: 15000,             // 15s para dar margen a entornos de test y móviles lentos
+        maximumAge: 60000,          // Acepta posición cacheada de hasta 1 minuto
       }
     );
   };

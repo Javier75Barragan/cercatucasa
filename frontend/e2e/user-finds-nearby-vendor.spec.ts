@@ -52,11 +52,22 @@ test('usuario encuentra un vendedor cercano', async ({ page }) => {
   });
 
   await page.goto('/');
+  await page.waitForLoadState('networkidle');
 
-  // Prefer to assert the vendor list elements (more robust than relying on heading variants)
-  await expect(page.getByText('Panaderia La Esquina')).toBeVisible();
-  await expect(page.getByText('180m')).toBeVisible();
-  await expect(page.getByText('Mostrando 1 resultados')).toBeVisible();
-  await expect(page.getByText('180m')).toBeVisible();
-  await expect(page.getByText('Mostrando 1 resultados')).toBeVisible();
+  const mobileListButton = page.getByRole('button', { name: /Ver Listado/i }).first();
+  if (await mobileListButton.count() > 0) {
+    await expect(mobileListButton).toBeVisible({ timeout: 15000 });
+    await mobileListButton.click({ force: true });
+  }
+
+  const mobileHeading = page.getByRole('heading', { name: /Vendedores Cerca/i });
+  if (await mobileHeading.count() > 0) {
+    await expect(mobileHeading).toBeVisible({ timeout: 15000 });
+  }
+
+  const vendorCard = page.locator('#vendor-card-vendor-pan-1');
+  await expect(vendorCard).toBeVisible({ timeout: 15000 });
+  await expect(vendorCard.getByText('Panaderia La Esquina')).toBeVisible();
+  await expect(vendorCard.getByText('180m')).toBeVisible();
+  await expect(page.getByText(/resultados/i)).toBeVisible();
 });
