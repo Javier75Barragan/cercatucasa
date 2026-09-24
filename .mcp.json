@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "postgresql": {
+    "postgresql_disabled": {
       "command": "npx",
       "args": [
         "-y",

@@ -10,6 +10,18 @@ const MapFilters = () => {
   const [localRadius, setLocalRadius] = useState(filters.radius);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Sync local radius with store
+  useEffect(() => {
+    setLocalRadius(filters.radius);
+  }, [filters.radius]);
+
+  // Listen for external toggle
+  useEffect(() => {
+    const handleToggle = () => setIsExpanded(prev => !prev);
+    window.addEventListener('toggle-filters', handleToggle);
+    return () => window.removeEventListener('toggle-filters', handleToggle);
+  }, []);
+
   useEffect(() => {
     const loadCategories = async () => {
       try {

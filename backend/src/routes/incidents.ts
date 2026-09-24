@@ -25,6 +25,42 @@ const INCIDENT_TYPES = [
 // ============================================
 // PARA TODOS (autenticados o no): Obtener tipos
 // ============================================
+/**
+ * @openapi
+ * /api/incidents/types:
+ *   get:
+ *     tags:
+ *       - Incidentes
+ *     summary: Obtener tipos de incidentes
+ *     description: Devuelve la lista de tipos de incidentes disponibles con sus iconos y colores. Ruta pública.
+ *     responses:
+ *       200:
+ *         description: Lista de tipos de incidentes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: "accident"
+ *                       name:
+ *                         type: string
+ *                         example: "Accidente de Tránsito"
+ *                       icon:
+ *                         type: string
+ *                         example: "🚗"
+ *                       color:
+ *                         type: string
+ *                         example: "#ef4444"
+ */
 router.get(
   '/types',
   asyncHandler(async (_req, res) => {
@@ -39,6 +75,61 @@ router.get(
 // ============================================
 // PARA TODOS (autenticados o no): Crear reporte
 // ============================================
+/**
+ * @openapi
+ * /api/incidents:
+ *   post:
+ *     tags:
+ *       - Incidentes
+ *     summary: Crear reporte de incidente
+ *     description: Reporta un incidente en una ubicación. Puede ser usado por usuarios autenticados o anónimos. Notifica a vendedores y autoridades cercanas por WebSocket.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - phone
+ *               - latitude
+ *               - longitude
+ *               - type
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *                 example: "Juan Pérez"
+ *               phone:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 20
+ *                 example: "+573001234567"
+ *               latitude:
+ *                 type: number
+ *                 minimum: -90
+ *                 maximum: 90
+ *                 example: 4.7110
+ *               longitude:
+ *                 type: number
+ *                 minimum: -180
+ *                 maximum: 180
+ *                 example: -74.0721
+ *               type:
+ *                 type: string
+ *                 enum: [accident, medical, fire, police, road_block, fallen_tree, flood, other]
+ *                 example: "accident"
+ *               description:
+ *                 type: string
+ *                 maxLength: 1000
+ *                 example: "Choque entre dos vehículos en la esquina"
+ *     responses:
+ *       201:
+ *         description: Incidente reportado exitosamente
+ *       400:
+ *         description: Datos de entrada inválidos o tipo de incidente no válido
+ */
 router.post(
   '/',
   optionalAuth, // Permite usuarios no autenticados también
@@ -140,6 +231,55 @@ router.post(
 // ============================================
 // PARA VENDEDORES/AUTORIDADES: Obtener incidentes cercanos
 // ============================================
+/**
+ * @openapi
+ * /api/incidents/nearby:
+ *   get:
+ *     tags:
+ *       - Incidentes
+ *     summary: Obtener incidentes cercanos
+ *     description: Devuelve los incidentes cercanos a una ubicación dada, filtrados por radio, tipo y estado. Requiere autenticación.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: lat
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: Latitud del punto de referencia
+ *       - in: query
+ *         name: lng
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: Longitud del punto de referencia
+ *       - in: query
+ *         name: radius
+ *         schema:
+ *           type: integer
+ *           default: 5000
+ *         description: Radio de búsqueda en metros
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [accident, medical, fire, police, road_block, fallen_tree, flood, other]
+ *         description: Filtrar por tipo de incidente
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, in_progress, resolved, cancelled]
+ *         description: "Filtrar por estado. Por defecto: pending e in_progress"
+ *     responses:
+ *       200:
+ *         description: Lista de incidentes cercanos
+ *       400:
+ *         description: Latitud y longitud son requeridas
+ *       401:
+ *         description: No autorizado
+ */
 router.get(
   '/nearby',
   authenticate,
@@ -211,6 +351,49 @@ router.get(
 // ============================================
 // Actualizar estado del incidente (aceptar/resolver)
 // ============================================
+/**
+ * @openapi
+ * /api/incidents/{id}/status:
+ *   patch:
+ *     tags:
+ *       - Incidentes
+ *     summary: Actualizar estado de un incidente
+ *     description: Cambia el estado de un incidente (aceptar, resolver, cancelar). Notifica por WebSocket.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID del incidente
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pending, in_progress, resolved, cancelled]
+ *                 example: "in_progress"
+ *               notes:
+ *                 type: string
+ *                 maxLength: 1000
+ *                 example: "En camino al lugar del incidente"
+ *     responses:
+ *       200:
+ *         description: Estado del incidente actualizado
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Incidente no encontrado
+ */
 router.patch(
   '/:id/status',
   authenticate,
@@ -277,6 +460,22 @@ router.patch(
 // ============================================
 // Obtener historial de incidentes del usuario
 // ============================================
+/**
+ * @openapi
+ * /api/incidents/my-reports:
+ *   get:
+ *     tags:
+ *       - Incidentes
+ *     summary: Obtener historial de incidentes del usuario
+ *     description: Devuelve todos los incidentes reportados por el usuario autenticado.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de incidentes del usuario
+ *       401:
+ *         description: No autorizado
+ */
 router.get(
   '/my-reports',
   authenticate,

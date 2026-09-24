@@ -18,6 +18,9 @@ export const useSocket = (onIncidentAlert?: (incident: Incident) => void) => {
     socketRef.current = io(SOCKET_URL, {
       auth: { token },
       transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
     const socket = socketRef.current;
@@ -38,6 +41,11 @@ export const useSocket = (onIncidentAlert?: (incident: Incident) => void) => {
 
     socket.on('disconnect', () => {
       console.log('🔴 WebSocket desconectado');
+      setIsConnected(false);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('❌ Error de conexión WebSocket:', err.message);
       setIsConnected(false);
     });
 

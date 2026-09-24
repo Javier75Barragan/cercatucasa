@@ -12,11 +12,14 @@ declare global {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 if (!JWT_SECRET) {
-  // En producción esto ya se valida en index.ts, pero por seguridad de tipos
-  // y para evitar comportamientos inesperados, lanzamos error aquí también.
   throw new Error('JWT_SECRET must be defined in environment variables');
+}
+
+if (!JWT_REFRESH_SECRET) {
+  throw new Error('JWT_REFRESH_SECRET must be defined in environment variables');
 }
 
 export const generateToken = (payload: Omit<JWTPayload, 'iat' | 'exp'>): string => {
@@ -26,13 +29,17 @@ export const generateToken = (payload: Omit<JWTPayload, 'iat' | 'exp'>): string 
 };
 
 export const generateRefreshToken = (payload: Omit<JWTPayload, 'iat' | 'exp'>): string => {
-  return jwt.sign(payload as any, JWT_SECRET, {
+  return jwt.sign(payload as any, JWT_REFRESH_SECRET!, {
     expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any,
   });
 };
 
 export const verifyToken = (token: string): JWTPayload => {
-  return jwt.verify(token, JWT_SECRET) as JWTPayload;
+  return jwt.verify(token, JWT_SECRET!) as JWTPayload;
+};
+
+export const verifyRefreshToken = (token: string): JWTPayload => {
+  return jwt.verify(token, JWT_REFRESH_SECRET!) as JWTPayload;
 };
 
 // Middleware de autenticación
@@ -42,9 +49,11 @@ export const authenticate = (
   next: NextFunction
 ): void => {
   try {
+    // Intentar obtener el token del header Authorization o de las cookies
     const authHeader = req.headers.authorization;
+    const cookieToken = (req as any).cookies?.token;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if ((!authHeader || !authHeader.startsWith('Bearer ')) && !cookieToken) {
       res.status(401).json({
         success: false,
         error: 'No se proporcionó token de autenticación',
@@ -52,7 +61,7 @@ export const authenticate = (
       return;
     }
 
-    const token = authHeader.substring(7);
+    const token = authHeader ? authHeader.substring(7) : cookieToken;
     const decoded = verifyToken(token);
     req.user = decoded;
     next();
@@ -95,8 +104,10 @@ export const optionalAuth = (
 ): void => {
   try {
     const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
+    const cookieToken = (req as any).cookies?.token;
+
+    if ((authHeader && authHeader.startsWith('Bearer ')) || cookieToken) {
+      const token = authHeader ? authHeader.substring(7) : cookieToken;
       const decoded = verifyToken(token);
       req.user = decoded;
     }
